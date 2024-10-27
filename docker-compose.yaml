@@ -1,0 +1,11 @@
+services:
+  tasteplorer-api:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: development
+    command: pnpm run start:dev
+    ports:
+      - '8080:8080'
+    volumes:
+      - .:/usr/src/app
