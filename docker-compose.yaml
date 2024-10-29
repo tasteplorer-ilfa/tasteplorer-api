@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-      target: development
     command: pnpm run start:dev
     ports:
       - '8080:8080'
