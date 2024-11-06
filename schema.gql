@@ -2,29 +2,120 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-input CreateUserInput {
-  """Example field (placeholder)"""
-  exampleField: Int!
+type AuthPayload {
+  """Token authorization"""
+  token: String!
+
+  """User object"""
+  user: UserDto!
+}
+
+"""Date custom scalar type"""
+scalar Date
+
+input LoginInput {
+  """User Email Field"""
+  email: String!
+
+  """User Password"""
+  password: String!
+}
+
+type MetaData {
+  """current page of a list data"""
+  currentPage: Int!
+
+  """page size of a list data"""
+  pageSize: Int!
+
+  """total data of list data"""
+  total: Int!
+
+  """total page of a list data"""
+  totalPage: Int!
 }
 
 type Mutation {
-  createUser(createUserInput: CreateUserInput!): User!
-  removeUser(id: Int!): User!
-  updateUser(updateUserInput: UpdateUserInput!): User!
+  login(input: LoginInput!): AuthPayload!
+  register(input: UserRegisterInput!): AuthPayload!
+  updateUser(id: ID!, input: UpdateUserInput!): UserDto!
 }
 
 type Query {
-  helloWorld: String!
-  user(id: Int!): User!
+  currentUser: UserDto!
+  users: UserListData!
 }
 
 input UpdateUserInput {
-  """Example field (placeholder)"""
-  exampleField: Int
-  id: Int!
+  """User BirthDate Field"""
+  birthDate: String!
+
+  """User Email Field"""
+  email: String
+
+  """User Fullname Field"""
+  fullname: String
+
+  """User Gender Field"""
+  gender: String
+
+  """User Image Field"""
+  image: String
 }
 
-type User {
-  """Example field (placeholder)"""
-  exampleField: Int!
+type UserDto {
+  """User Birthdate"""
+  birthDate: Date!
+
+  """User Created At"""
+  createdAt: String!
+
+  """User Deleted At"""
+  deletedAt: Date
+
+  """User Email"""
+  email: String!
+
+  """User Fullname"""
+  fullname: String
+
+  """User Gender"""
+  gender: String!
+
+  """User ID"""
+  id: ID!
+
+  """User Image"""
+  image: String
+
+  """User Updated At"""
+  updatedAt: String!
+}
+
+type UserListData {
+  """metadata desc"""
+  meta: MetaData!
+
+  """Users data"""
+  users: [UserDto!]!
+}
+
+input UserRegisterInput {
+  """User BirthDate Field"""
+  birthDate: String!
+
+  """User Email Field"""
+  email: String!
+
+  """User Fullname Field"""
+  fullname: String!
+
+  """User Gender Field"""
+  gender: String!
+
+  """User Image Field"""
+  image: String!
+
+  """User Password Field"""
+  password: String!
 }
