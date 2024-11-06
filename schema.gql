@@ -71,7 +71,7 @@ type UserDto {
   createdAt: String!
 
   """User Deleted At"""
-  deletedAt: Date!
+  deletedAt: Date
 
   """User Email"""
   email: String!

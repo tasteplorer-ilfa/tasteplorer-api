@@ -28,7 +28,7 @@ export class UserDto {
   @Field(() => String, { description: 'User Updated At' })
   updatedAt: string;
 
-  @Field(() => Date, { description: 'User Deleted At' })
+  @Field(() => Date, { description: 'User Deleted At', nullable: true })
   deletedAt?: Date;
 }
 
