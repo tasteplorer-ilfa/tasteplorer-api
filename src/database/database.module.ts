@@ -12,7 +12,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         database: configService.getOrThrow('DATABASE_NAME'),
         username: configService.getOrThrow('DATABASE_USERNAME'),
         password: configService.getOrThrow('DATABASE_PASS'),
-        synchronize: configService.getOrThrow('DATABASE_IS_SYNCRONIZE'), // SET TRUE ONLY ON DEV, SET FALSE ON PRPODUCTION ENVIRONMENT
+        synchronize: false, // SET TRUE ONLY ON DEV, SET FALSE ON PRPODUCTION ENVIRONMENT
         autoLoadEntities: true,
         // TODO: nestjs typeorm setup dialectOptions ssl true
         ssl: { rejectUnauthorized: true },
