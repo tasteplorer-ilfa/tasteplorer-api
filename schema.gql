@@ -10,6 +10,34 @@ type AuthPayload {
   user: UserDto!
 }
 
+type BannerDto {
+  """Banner Created At"""
+  createdAt: String!
+
+  """Banner Deleted At"""
+  deletedAt: Date
+
+  """Banner ID"""
+  id: ID!
+
+  """Banner Image"""
+  image: String!
+
+  """Banner Title"""
+  title: String!
+
+  """Banner Updated At"""
+  updatedAt: String!
+}
+
+type BannerListDto {
+  """Banner List Data"""
+  banners: [BannerDto!]!
+
+  """Banner Metadata"""
+  meta: MetaData!
+}
+
 """Date custom scalar type"""
 scalar Date
 
@@ -42,6 +70,8 @@ type Mutation {
 }
 
 type Query {
+  bannerDetail(id: Int!): BannerDto!
+  bannerList(page: Int!, pageSize: Int!): BannerListDto!
   currentUser: UserDto!
   users: UserListData!
 }
