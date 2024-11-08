@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '@database/database.module';
 import { UserModule } from '@module/user/user.module';
 import { AuthModule } from '@module/auth/auth.module';
+import { BannerModule } from './modules/banner/banner.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AuthModule } from '@module/auth/auth.module';
     DatabaseModule,
     UserModule,
     AuthModule,
+    BannerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
