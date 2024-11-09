@@ -2,6 +2,37 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type ArticleDto {
+  """Article Created At"""
+  createdAt: String!
+
+  """Article Deleted At"""
+  deletedAt: Date
+
+  """Article Description"""
+  description: String!
+
+  """Article ID"""
+  id: ID!
+
+  """Article Image"""
+  imageUrl: String!
+
+  """Article Title"""
+  title: String!
+
+  """Article Updated At"""
+  updatedAt: String!
+}
+
+type ArticleListDto {
+  """Article List Data"""
+  articles: [ArticleDto!]!
+
+  """Article Metadata"""
+  meta: MetaData!
+}
+
 type AuthPayload {
   """Token authorization"""
   token: String!
@@ -70,6 +101,8 @@ type Mutation {
 }
 
 type Query {
+  articleDetail(id: Int!): ArticleDto!
+  articleList(page: Float!, pageSize: Float!): ArticleListDto!
   bannerDetail(id: Int!): BannerDto!
   bannerList(page: Int!, pageSize: Int!): BannerListDto!
   currentUser: UserDto!
