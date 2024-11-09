@@ -14,8 +14,21 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         password: configService.getOrThrow('DATABASE_PASS'),
         synchronize: false, // SET TRUE ONLY ON DEV, SET FALSE ON PRPODUCTION ENVIRONMENT
         autoLoadEntities: true,
+        logging: true,
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        // migrations: [__dirname + '/database/migrations/*.ts'],
+        migrations: [__dirname + '/database/migrations/*.ts'],
+        cli: {
+          migrationsDir: 'src/database/migrations',
+        },
         // TODO: nestjs typeorm setup dialectOptions ssl true
-        ssl: { rejectUnauthorized: true },
+        // ssl: { rejectUnauthorized: true, required: true },
+        extra: {
+          ssl: {
+            require: true, // Enforces SSL connection (equivalent to 'sslmode=require')
+            rejectUnauthorized: true, // Enforces server certificate validation
+          },
+        },
       }),
       inject: [ConfigService],
     }),
