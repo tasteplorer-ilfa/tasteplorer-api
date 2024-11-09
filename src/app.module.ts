@@ -10,6 +10,7 @@ import { DatabaseModule } from '@database/database.module';
 import { UserModule } from '@module/user/user.module';
 import { AuthModule } from '@module/auth/auth.module';
 import { BannerModule } from './modules/banner/banner.module';
+import { ArticleModule } from '@module/article/article.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { BannerModule } from './modules/banner/banner.module';
     UserModule,
     AuthModule,
     BannerModule,
+    ArticleModule,
   ],
   controllers: [AppController],
   providers: [AppService],
