@@ -41,11 +41,11 @@ export class UserService {
       const createdAt: string = utcToAsiaJakarta(user.createdAt);
       const updatedAt: string = utcToAsiaJakarta(user.updatedAt);
 
-      const userDto: UserDto = {
+      const userDto: UserDto = new UserDto({
         ...result,
         createdAt,
         updatedAt,
-      };
+      });
 
       return userDto;
     } catch (error) {
@@ -90,11 +90,11 @@ export class UserService {
       const createdAt: string = utcToAsiaJakarta(result.createdAt);
       const updatedAt: string = utcToAsiaJakarta(result.updatedAt);
 
-      const userDto: UserDto = {
+      const userDto: UserDto = new UserDto({
         ...result,
         createdAt,
         updatedAt,
-      };
+      });
 
       return userDto;
     } catch (error) {
@@ -145,11 +145,11 @@ export class UserService {
       const createdAt: string = utcToAsiaJakarta(user.createdAt);
       const updatedAt: string = utcToAsiaJakarta(user.updatedAt);
 
-      const userDto: UserDto = {
+      const userDto: UserDto = new UserDto({
         ...user,
         createdAt,
         updatedAt,
-      };
+      });
 
       return userDto;
     } catch (error) {

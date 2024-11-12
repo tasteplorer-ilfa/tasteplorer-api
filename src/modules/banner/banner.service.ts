@@ -48,10 +48,10 @@ export class BannerService {
         return bannerDto;
       });
 
-      const result: BannerListDto = {
+      const result: BannerListDto = new BannerListDto({
         banners,
         meta: metaData,
-      };
+      });
 
       return result;
     } catch (error) {
@@ -74,11 +74,11 @@ export class BannerService {
       const createdAt: string = utcToAsiaJakarta(banner?.createdAt);
       const updatedAt: string = utcToAsiaJakarta(banner?.updatedAt);
 
-      const result: BannerDto = {
+      const result: BannerDto = new BannerDto({
         ...banner,
         createdAt,
         updatedAt,
-      };
+      });
 
       return result;
     } catch (error) {
