@@ -1,5 +1,12 @@
+import { Recipe } from '@module/recipe/entities/recipe.entity';
 import { AbstractEntity } from 'src/database/database.entity';
-import { Column, CreateDateColumn, Entity, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity({ name: 'users' })
 export class User extends AbstractEntity<User> {
@@ -39,4 +46,11 @@ export class User extends AbstractEntity<User> {
   deletedAt: Date;
 
   // ToDo: we will add recipe relationship OneToMany below
+  // @OneToMany(() => Recipe, (recipe) => recipe.userId, { cascade: true })
+  // recipes: Recipe[];
+
+  @OneToMany(() => Recipe, (recipe) => recipe.user, {
+    cascade: true,
+  })
+  recipes: Recipe[];
 }
