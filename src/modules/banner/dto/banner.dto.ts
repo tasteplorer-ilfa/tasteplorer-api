@@ -3,6 +3,10 @@ import { ObjectType, Field, ID } from '@nestjs/graphql';
 
 @ObjectType()
 export class BannerDto {
+  constructor(entity: BannerDto) {
+    Object.assign(this, entity);
+  }
+
   @Field(() => ID, { description: 'Banner ID' })
   id: number;
 
@@ -24,6 +28,10 @@ export class BannerDto {
 
 @ObjectType()
 export class BannerListDto {
+  constructor(data: any) {
+    Object.assign(this, data);
+  }
+
   @Field(() => [BannerDto], { description: 'Banner List Data' })
   banners: BannerDto[];
 

@@ -3,6 +3,9 @@ import { ObjectType, Field, ID } from '@nestjs/graphql';
 
 @ObjectType()
 export class ArticleDto {
+  constructor(entity: ArticleDto) {
+    Object.assign(this, entity);
+  }
   @Field(() => ID, { description: 'Article ID' })
   id: number;
 
@@ -27,6 +30,9 @@ export class ArticleDto {
 
 @ObjectType()
 export class ArticleListDto {
+  constructor(entity: ArticleListDto) {
+    Object.assign(this, entity);
+  }
   @Field(() => [ArticleDto], { description: 'Article List Data' })
   articles: ArticleDto[];
 

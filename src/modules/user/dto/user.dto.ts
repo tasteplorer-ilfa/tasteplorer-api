@@ -3,6 +3,10 @@ import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
 
 @ObjectType()
 export class UserDto {
+  constructor(entity: UserDto) {
+    Object.assign(this, entity);
+  }
+
   @Field(() => ID, { description: 'User ID' })
   id: number;
 
