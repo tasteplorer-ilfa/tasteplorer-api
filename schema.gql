@@ -95,8 +95,11 @@ type MetaData {
 }
 
 type Mutation {
+  createRecipe(input: RecipeInput!): RecipeDto!
   login(input: LoginInput!): AuthPayload!
   register(input: UserRegisterInput!): AuthPayload!
+  removeRecipe(id: Int!): String!
+  updateRecipe(id: ID!, input: RecipeInput!): RecipeDto!
   updateUser(id: ID!, input: UpdateUserInput!): UserDto!
 }
 
@@ -106,7 +109,143 @@ type Query {
   bannerDetail(id: Int!): BannerDto!
   bannerList(page: Int!, pageSize: Int!): BannerListDto!
   currentUser: UserDto!
+  myRecipeDetail(id: Int!): RecipeDto!
+  myRecipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
+  recipeDetail(id: Int!): RecipeDto!
+  recipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
   users: UserListData!
+}
+
+type RecipeDto {
+  """Recipe Author Detail"""
+  author: UserDto!
+
+  """Recipe Cooking Time"""
+  cookingTime: String!
+
+  """Recipe Created At"""
+  createdAt: String!
+
+  """Recipe Deleted At"""
+  deletedAt: Date
+
+  """Recipe Description"""
+  description: String
+
+  """Recipe ID"""
+  id: ID!
+
+  """Recipe Media Detail"""
+  image: RecipeMediaDto!
+
+  """Recipe Ingredient List"""
+  ingredients: [RecipeIngredientDto!]!
+
+  """Recipe Instruction List"""
+  instructions: [RecipeInstructionDto!]!
+
+  """Is A Favorite Recipe"""
+  isFavorite: Boolean
+
+  """Recipe Servings"""
+  servings: String!
+
+  """Recipe Title"""
+  title: String!
+
+  """Recipe Updated At"""
+  updatedAt: String!
+}
+
+type RecipeIngredientDto {
+  """Recipe Ingredient Created At"""
+  createdAt: String!
+
+  """Recipe Ingredient Deleted At"""
+  deletedAt: Date
+
+  """Recipe Ingredient ID"""
+  id: ID!
+
+  """Recipe Ingredient"""
+  ingredient: String!
+
+  """Recipe Ingredient Recipe ID"""
+  recipeId: Int!
+
+  """Recipe Ingredient Updated At"""
+  updatedAt: String!
+}
+
+input RecipeInput {
+  """The recipe cooking time"""
+  cookingTime: String!
+
+  """The recipe description"""
+  description: String!
+
+  """The recipe image"""
+  image: String!
+
+  """The recipe ingredients"""
+  ingredients: [String!]!
+
+  """The recipe instructions"""
+  instructions: [String!]!
+
+  """The recipe servings"""
+  servings: String!
+
+  """The recipe title"""
+  title: String!
+}
+
+type RecipeInstructionDto {
+  """Recipe Instruction Created At"""
+  createdAt: String!
+
+  """Recipe Instruction Deleted At"""
+  deletedAt: Date
+
+  """Recipe Instruction ID"""
+  id: ID!
+
+  """Recipe Instruction"""
+  instruction: String!
+
+  """Recipe Instruction Recipe ID"""
+  recipeId: Int!
+
+  """Recipe Instruction Updated At"""
+  updatedAt: String!
+}
+
+type RecipeListDataDto {
+  """Recipe List Metadata"""
+  meta: MetaData!
+
+  """List of Recipes"""
+  recipes: [RecipeDto!]!
+}
+
+type RecipeMediaDto {
+  """Recipe Media Created At"""
+  createdAt: String!
+
+  """Recipe Media Deleted At"""
+  deletedAt: Date
+
+  """Recipe Media ID"""
+  id: ID!
+
+  """Recipe Media Recipe ID"""
+  recipeId: Int!
+
+  """Recipe Media Updated At"""
+  updatedAt: String!
+
+  """Recipe Media Url"""
+  url: String!
 }
 
 input UpdateUserInput {
