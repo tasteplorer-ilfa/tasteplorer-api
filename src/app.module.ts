@@ -12,6 +12,9 @@ import { AuthModule } from '@module/auth/auth.module';
 import { ArticleModule } from '@module/article/article.module';
 import { BannerModule } from '@module/banner/banner.module';
 import { RecipeModule } from '@module/recipe/recipe.module';
+import { LoggerService } from '@common/logging/logger.service';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingInterceptor } from '@common/logging/logger.interceptor';
 
 @Module({
   imports: [
@@ -40,6 +43,13 @@ import { RecipeModule } from '@module/recipe/recipe.module';
     RecipeModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    LoggerService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
 export class AppModule {}
