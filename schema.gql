@@ -69,8 +69,30 @@ type BannerListDto {
   meta: MetaData!
 }
 
+type CloudinaryResponseDto {
+  """The image url of the image that already success uploaded to cloudinary"""
+  imageUrl: String!
+
+  """The status of sucessfully upload image to cloudinary"""
+  isSuccess: Boolean!
+}
+
 """Date custom scalar type"""
 scalar Date
+
+"""Folders in Cloudinary where images can be uploaded"""
+enum EnumFolder {
+  ARTICLE
+  BANNER
+  RECIPE
+}
+
+"""Enum service which storage service that will be used"""
+enum EnumService {
+  Cloudinary
+  S3Storage
+  Web3Storage
+}
 
 input LoginInput {
   """User Email Field"""
@@ -101,6 +123,7 @@ type Mutation {
   removeRecipe(id: Int!): String!
   updateRecipe(id: ID!, input: RecipeInput!): RecipeDto!
   updateUser(id: ID!, input: UpdateUserInput!): UserDto!
+  uploadSingleFile(file: Upload!, setting: UploadParamInput!): CloudinaryResponseDto!
 }
 
 type Query {
@@ -263,6 +286,14 @@ input UpdateUserInput {
 
   """User Image Field"""
   image: String
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+input UploadParamInput {
+  folder: EnumFolder!
+  uploadService: EnumService!
 }
 
 type UserDto {
