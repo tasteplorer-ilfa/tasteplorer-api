@@ -15,6 +15,7 @@ import { RecipeModule } from '@module/recipe/recipe.module';
 import { LoggerService } from '@common/logging/logger.service';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from '@common/logging/logger.interceptor';
+import { UploadFileModule } from '@module/upload-file/upload-file.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { LoggingInterceptor } from '@common/logging/logger.interceptor';
     BannerModule,
     ArticleModule,
     RecipeModule,
+    UploadFileModule,
   ],
   controllers: [AppController],
   providers: [
