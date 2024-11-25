@@ -58,8 +58,6 @@ export class GraphqlLoggingInterceptor implements NestInterceptor {
   private sanitizeQueryArgs(query: any): any {
     let sanitizedQuery = { ...query };
 
-    console.log('query: ', { ...query.input });
-
     if (query.input) {
       sanitizedQuery = { ...query.input };
     }
