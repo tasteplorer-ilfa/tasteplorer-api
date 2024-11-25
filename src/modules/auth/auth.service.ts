@@ -39,6 +39,8 @@ export class AuthService {
       const createdAt: string = utcToAsiaJakarta(user.createdAt);
       const updatedAt: string = utcToAsiaJakarta(user.updatedAt);
 
+      delete user.password;
+
       const userDto: UserDto = {
         ...user,
         createdAt,
