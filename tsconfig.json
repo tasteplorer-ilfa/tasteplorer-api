@@ -21,7 +21,8 @@
     "paths": {
       "@common/*": ["src/libs/common/src/*"],
       "@database/*": ["src/database/*"],
-      "@module/*": ["src/modules/*"]
+      "@module/*": ["src/modules/*"],
+      "@log/*": ["src/log/*"]
     }
   }
 }
