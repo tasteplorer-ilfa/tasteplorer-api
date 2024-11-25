@@ -12,10 +12,10 @@ import { AuthModule } from '@module/auth/auth.module';
 import { ArticleModule } from '@module/article/article.module';
 import { BannerModule } from '@module/banner/banner.module';
 import { RecipeModule } from '@module/recipe/recipe.module';
-import { LoggerService } from '@common/logging/logger.service';
-import { APP_INTERCEPTOR } from '@nestjs/core';
-import { LoggingInterceptor } from '@common/logging/logger.interceptor';
 import { UploadFileModule } from '@module/upload-file/upload-file.module';
+import { CustomLoggerService } from '@log/logger.service';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { GraphqlLoggingInterceptor } from '@log/graphql-logging.interceptor';
 
 @Module({
   imports: [
@@ -47,10 +47,10 @@ import { UploadFileModule } from '@module/upload-file/upload-file.module';
   controllers: [AppController],
   providers: [
     AppService,
-    LoggerService,
+    CustomLoggerService,
     {
       provide: APP_INTERCEPTOR,
-      useClass: LoggingInterceptor,
+      useClass: GraphqlLoggingInterceptor,
     },
   ],
 })
