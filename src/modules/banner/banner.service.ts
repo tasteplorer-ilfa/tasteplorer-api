@@ -1,41 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Banner } from './entities/banner.entity';
-import { Repository } from 'typeorm';
 import { GraphQLError } from 'graphql';
 import { maxPageValidation, setPage } from '@common/utils/maxPageValidation';
 import { MetaData } from '@common/dto/metaData.dto';
 import { BannerDto, BannerListDto } from './dto/banner.dto';
 import { utcToAsiaJakarta } from '@common/utils/timezone-converter';
+import { BannerRepository } from './banner.repository';
 
 @Injectable()
 export class BannerService {
-  constructor(
-    @InjectRepository(Banner)
-    private readonly bannerRepository: Repository<Banner>,
-  ) {}
+  constructor(private readonly bannerRepository: BannerRepository) {}
 
   async findAll(page: number, pageSize: number): Promise<BannerListDto> {
     maxPageValidation(pageSize);
     const offset: number = setPage(page, pageSize);
 
     try {
-      const data = await this.bannerRepository
-        .createQueryBuilder('banners')
-        .where('deleted_at IS NULL')
-        .orderBy('banners.id', 'DESC')
-        .skip(offset)
-        .take(pageSize)
-        .getManyAndCount();
+      const [data, total] = await this.bannerRepository.findAll(
+        offset,
+        pageSize,
+      );
 
       const metaData: MetaData = {
         pageSize: pageSize,
         currentPage: page,
-        total: data[1],
-        totalPage: Math.ceil(data[1] / pageSize),
+        total,
+        totalPage: Math.ceil(total / pageSize),
       };
 
-      const banners: BannerDto[] = data[0].map((item) => {
+      const banners: BannerDto[] = data.map((item) => {
         const createdAt: string = utcToAsiaJakarta(item.createdAt);
         const updatedAt: string = utcToAsiaJakarta(item.updatedAt);
 
@@ -61,11 +53,7 @@ export class BannerService {
 
   async findOne(id: number): Promise<BannerDto> {
     try {
-      const banner = await this.bannerRepository
-        .createQueryBuilder('banners')
-        .where('banners.id = :id', { id })
-        .andWhere('banners.deleted_at IS NULL')
-        .getOne();
+      const banner = await this.bannerRepository.findById(id);
 
       if (!banner) {
         throw new GraphQLError('Banner not found.');
