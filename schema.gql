@@ -136,7 +136,6 @@ type Query {
   myRecipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
   recipeDetail(id: Int!): RecipeDto!
   recipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
-  users: UserListData!
 }
 
 type RecipeDto {
@@ -323,14 +322,6 @@ type UserDto {
 
   """User Updated At"""
   updatedAt: String!
-}
-
-type UserListData {
-  """metadata desc"""
-  meta: MetaData!
-
-  """Users data"""
-  users: [UserDto!]!
 }
 
 input UserRegisterInput {
