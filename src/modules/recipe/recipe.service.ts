@@ -1,9 +1,7 @@
 import { maxPageValidation, setPage } from '@common/utils/maxPageValidation';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { GraphQLError } from 'graphql';
-import { Recipe } from './entities/recipe.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { MetaData } from '@common/dto/metaData.dto';
 import { RecipeDto, RecipeInput, RecipeListDataDto } from './dto/recipe.dto';
 import { utcToAsiaJakarta } from '@common/utils/timezone-converter';
@@ -11,15 +9,12 @@ import { RecipeIngredientDto } from './dto/recipe-ingredient.dto';
 import { RecipeInstructionDto } from './dto/recipe-instruction.dto';
 import { RecipeMediaDto } from './dto/recipe-media.dto';
 import { UserDto } from '@module/user/dto/user.dto';
-import { RecipeIngredient } from './entities/recipe-ingredient.entity';
-import { RecipeInstruction } from './entities/recipe-instruction.entity';
-import { RecipeMedia } from './entities/recipe-media.entity';
+import { RecipeRepository } from './recipe.repository';
 
 @Injectable()
 export class RecipeService {
   constructor(
-    @InjectRepository(Recipe)
-    private readonly recipeRepository: Repository<Recipe>,
+    private readonly recipeRepository: RecipeRepository,
     private readonly entityManager: EntityManager,
   ) {}
 
@@ -27,84 +22,10 @@ export class RecipeService {
     createRecipeInput: RecipeInput,
     userId: number,
   ): Promise<RecipeDto> {
-    const {
-      title,
-      description,
-      image,
-      servings,
-      cookingTime,
-      ingredients,
-      instructions,
-    } = createRecipeInput;
-
     try {
-      const createdRecipe = await this.entityManager.transaction(
-        async (manager: EntityManager) => {
-          const recipe = await manager
-            .createQueryBuilder()
-            .insert()
-            .into(Recipe)
-            .values({
-              title,
-              description,
-              servings,
-              cookingTime,
-              userId,
-              isFavorite: false,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .returning('*')
-            .execute();
-
-          const savedRecipe = recipe.identifiers[0];
-
-          const recipeIngredients = ingredients.map((ingredient) => ({
-            ingredient,
-            recipeId: savedRecipe.id,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }));
-
-          const insertIngredients = manager
-            .createQueryBuilder()
-            .insert()
-            .into(RecipeIngredient)
-            .values(recipeIngredients)
-            .execute();
-
-          const recipeInstructions = instructions.map((instruction) => ({
-            instruction,
-            recipeId: savedRecipe.id,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }));
-
-          const insertInstructions = manager
-            .createQueryBuilder()
-            .insert()
-            .into(RecipeInstruction)
-            .values(recipeInstructions)
-            .execute();
-
-          await Promise.all([
-            insertIngredients,
-            insertInstructions,
-            manager
-              .createQueryBuilder()
-              .insert()
-              .into(RecipeMedia)
-              .values({
-                url: image,
-                recipeId: savedRecipe.id,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              })
-              .execute(),
-          ]);
-
-          return savedRecipe.id;
-        },
+      const createdRecipe = await this.recipeRepository.create(
+        createRecipeInput,
+        userId,
       );
 
       return this.findOne(createdRecipe);
@@ -118,31 +39,12 @@ export class RecipeService {
     const offset = setPage(page, pageSize);
 
     try {
-      const data = await this.recipeRepository
-        .createQueryBuilder('recipes')
-        .innerJoinAndSelect(
-          'recipes.ingredients',
-          'ingredients',
-          'ingredients.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect(
-          'recipes.instructions',
-          'instructions',
-          'instructions.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect(
-          'recipes.image',
-          'image',
-          'image.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect('recipes.user', 'user')
-        .where('recipes.deleted_at IS NULL')
-        .orderBy('recipes.createdAt', 'DESC')
-        .skip(offset)
-        .take(pageSize)
-        .getManyAndCount();
+      const [data, total] = await this.recipeRepository.findAll(
+        offset,
+        pageSize,
+      );
 
-      const recipes: RecipeDto[] = data[0].map((recipe) => {
+      const recipes: RecipeDto[] = data.map((recipe) => {
         const createdAt: string = utcToAsiaJakarta(recipe.createdAt);
         const updatedAt: string = utcToAsiaJakarta(recipe.updatedAt);
 
@@ -196,8 +98,8 @@ export class RecipeService {
       const metaData: MetaData = {
         pageSize,
         currentPage: page,
-        total: data[1],
-        totalPage: Math.ceil(data[1] / pageSize),
+        total,
+        totalPage: Math.ceil(total / pageSize),
       };
 
       const recipeList: RecipeListDataDto = new RecipeListDataDto({
@@ -213,27 +115,7 @@ export class RecipeService {
 
   async findOne(id: number): Promise<RecipeDto> {
     try {
-      const recipe = await this.recipeRepository
-        .createQueryBuilder('recipes')
-        .innerJoinAndSelect(
-          'recipes.ingredients',
-          'ingredients',
-          'ingredients.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect(
-          'recipes.instructions',
-          'instructions',
-          'instructions.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect(
-          'recipes.image',
-          'image',
-          'image.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect('recipes.user', 'user')
-        .where('recipes.id = :id', { id })
-        .andWhere('recipes.deleted_at IS NULL')
-        .getOne();
+      const recipe = await this.recipeRepository.findById(id);
 
       if (!recipe) {
         throw new GraphQLError('Recipe not found.');
@@ -298,32 +180,13 @@ export class RecipeService {
     const offset = setPage(page, pageSize);
 
     try {
-      const data = await this.recipeRepository
-        .createQueryBuilder('recipes')
-        .innerJoinAndSelect(
-          'recipes.ingredients',
-          'ingredients',
-          'ingredients.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect(
-          'recipes.instructions',
-          'instructions',
-          'instructions.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect(
-          'recipes.image',
-          'image',
-          'image.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect('recipes.user', 'user')
-        .where('recipes.deleted_at IS NULL')
-        .andWhere('recipes.userId = :userId', { userId })
-        .orderBy('recipes.createdAt', 'DESC')
-        .skip(offset)
-        .take(pageSize)
-        .getManyAndCount();
+      const [data, total] = await this.recipeRepository.findAllMyRecipes(
+        offset,
+        pageSize,
+        userId,
+      );
 
-      const recipes: RecipeDto[] = data[0].map((recipe) => {
+      const recipes: RecipeDto[] = data.map((recipe) => {
         const createdAt: string = utcToAsiaJakarta(recipe.createdAt);
         const updatedAt: string = utcToAsiaJakarta(recipe.updatedAt);
 
@@ -377,8 +240,8 @@ export class RecipeService {
       const metaData: MetaData = {
         pageSize,
         currentPage: page,
-        total: data[1],
-        totalPage: Math.ceil(data[1] / pageSize),
+        total,
+        totalPage: Math.ceil(total / pageSize),
       };
 
       const recipeList: RecipeListDataDto = new RecipeListDataDto({
@@ -394,29 +257,7 @@ export class RecipeService {
 
   async findOneMyRecipe(id: number, userId: number): Promise<RecipeDto> {
     try {
-      const recipe = await this.recipeRepository
-        .createQueryBuilder('recipes')
-        .innerJoinAndSelect(
-          'recipes.ingredients',
-          'ingredients',
-          'ingredients.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect(
-          'recipes.instructions',
-          'instructions',
-          'instructions.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect(
-          'recipes.image',
-          'image',
-          'image.deleted_at IS NULL',
-        )
-        .innerJoinAndSelect('recipes.user', 'user')
-        .where('recipes.id = :id', { id })
-        .andWhere('recipes.deleted_at IS NULL')
-        .andWhere('recipes.userId = :userId', { userId })
-        .getOne();
-
+      const recipe = await this.recipeRepository.findOneMyRecipe(id, userId);
       if (!recipe) {
         throw new GraphQLError('Recipe not found.');
       }
@@ -477,97 +318,13 @@ export class RecipeService {
     userId: number,
   ): Promise<RecipeDto> {
     try {
-      const {
-        title,
-        description,
-        image,
-        servings,
-        cookingTime,
-        ingredients,
-        instructions,
-      } = updateRecipeInput;
-
       const existingRecipe = await this.findOne(id);
 
       if (existingRecipe.author.id !== userId) {
         throw new GraphQLError('Recipe not found for this user id.');
       }
 
-      await this.entityManager.transaction(async (manager: EntityManager) => {
-        const deleteRecipeIngredients = existingRecipe.ingredients.map(() => {
-          return manager
-            .createQueryBuilder()
-            .delete()
-            .from(RecipeIngredient)
-            .where('recipeId = :recipeId', { recipeId: existingRecipe.id })
-            .execute();
-        });
-
-        const deleteRecipeInstructions = existingRecipe.instructions.map(() => {
-          return manager
-            .createQueryBuilder()
-            .delete()
-            .from(RecipeInstruction)
-            .where('recipeId = :recipeId', { recipeId: existingRecipe.id })
-            .execute();
-        });
-
-        await Promise.all([deleteRecipeIngredients, deleteRecipeInstructions]);
-
-        await manager
-          .createQueryBuilder()
-          .update(Recipe)
-          .set({
-            title,
-            description,
-            servings,
-            cookingTime,
-            isFavorite: false,
-            updatedAt: new Date(),
-          })
-          .where('id = :id', { id })
-          .execute();
-
-        const recipeIngredients = ingredients.map((ingredient) => ({
-          ingredient,
-          recipeId: existingRecipe.id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }));
-
-        const insertIngredients = manager
-          .createQueryBuilder()
-          .insert()
-          .into(RecipeIngredient)
-          .values(recipeIngredients)
-          .execute();
-
-        const recipeInstructions = instructions.map((instruction) => ({
-          instruction,
-          recipeId: existingRecipe.id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }));
-
-        const insertInstructions = manager
-          .createQueryBuilder()
-          .insert()
-          .into(RecipeInstruction)
-          .values(recipeInstructions)
-          .execute();
-
-        const updateImage = manager
-          .createQueryBuilder()
-          .update(RecipeMedia)
-          .set({
-            url: image,
-            recipeId: existingRecipe.id,
-            updatedAt: new Date(),
-          })
-          .where('id = :id', { id: existingRecipe.image.id })
-          .execute();
-        await Promise.all([insertIngredients, insertInstructions, updateImage]);
-      });
+      await this.recipeRepository.update(id, updateRecipeInput, existingRecipe);
 
       return this.findOne(existingRecipe.id);
     } catch (error) {
@@ -583,14 +340,7 @@ export class RecipeService {
         throw new GraphQLError('Recipe not found for this user id.');
       }
 
-      await this.recipeRepository
-        .createQueryBuilder()
-        .update(Recipe)
-        .set({
-          deletedAt: new Date(),
-        })
-        .where('id = :id', { id })
-        .execute();
+      await this.recipeRepository.delete(id);
 
       return 'Recipe berhasil dihapus.';
     } catch (error) {

@@ -1,5 +1,5 @@
 import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
-import { UpdateUserInput, UserDto, UserListData } from './dto/user.dto';
+import { UpdateUserInput, UserDto } from './dto/user.dto';
 import { UserService } from './user.service';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '@module/auth/guards/jwt-auth.guard';
@@ -11,12 +11,6 @@ import { TokenPayload } from '@common/dto/tokenPayload.dto';
 @Resolver(() => UserDto)
 export class UserResolver {
   constructor(private readonly userService: UserService) {}
-
-  @Query(() => UserListData, { name: 'users' })
-  @UseGuards(JwtAuthGuard)
-  findAll() {
-    return this.userService.findAll();
-  }
 
   @Query(() => UserDto, { name: 'currentUser' })
   @UseGuards(JwtAuthGuard)

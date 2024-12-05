@@ -7,6 +7,7 @@ import { RecipeIngredient } from './entities/recipe-ingredient.entity';
 import { RecipeInstruction } from './entities/recipe-instruction.entity';
 import { RecipeMedia } from './entities/recipe-media.entity';
 import { AuthModule } from '@module/auth/auth.module';
+import { RecipeRepository } from './recipe.repository';
 
 @Module({
   imports: [
@@ -18,6 +19,6 @@ import { AuthModule } from '@module/auth/auth.module';
     ]),
     AuthModule,
   ],
-  providers: [RecipeResolver, RecipeService],
+  providers: [RecipeResolver, RecipeService, RecipeRepository],
 })
 export class RecipeModule {}
