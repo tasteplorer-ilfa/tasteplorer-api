@@ -117,9 +117,13 @@ export class UploadFileService {
   }
 
   async cloudinary(buffer: any, folder: any) {
+    const filename = generateRandomId();
+    const cloudinaryEnv =
+      this.env === 'development' ? CLOUDINARY_STAGING : CLOUDINARY_PRODUCTION;
+
     return await new Promise((resolve, reject) => {
       const upload = cloudinary.v2.uploader.upload_stream(
-        { folder: folder },
+        { public_id: `${cloudinaryEnv}/${folder}/${filename}` },
         (error, result) => {
           if (error) reject(error);
           resolve(result);
