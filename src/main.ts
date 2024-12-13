@@ -2,9 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { graphqlUploadExpress } from 'graphql-upload-minimal';
+import { ExpressAdapter } from '@nestjs/platform-express';
+import express from 'express';
+const server = express();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+  await app.init();
   const configService = app.get(ConfigService);
 
   // TODO: Will Implement in next future
