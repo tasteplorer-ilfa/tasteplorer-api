@@ -6,9 +6,10 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "start": "node -r tsconfig-paths/register dist/main.js", 
+    "vercel-build": "nest build", 
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
     "start:dev": "ts-node -r tsconfig-paths/register --transpile-only src/main.ts",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",

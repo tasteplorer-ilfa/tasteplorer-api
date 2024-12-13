@@ -8,6 +8,9 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2021",
     "sourceMap": true,
+    "rootDir": "./src",       // Source files are in src/
+    "moduleResolution": "node",
+    "strict": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
@@ -24,5 +27,7 @@
       "@module/*": ["src/modules/*"],
       "@log/*": ["src/log/*"]
     }
-  }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
