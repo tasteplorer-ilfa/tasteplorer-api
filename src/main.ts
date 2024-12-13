@@ -1,15 +1,11 @@
-import 'tsconfig-paths/register';
+import 'module-alias/register';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { graphqlUploadExpress } from 'graphql-upload-minimal';
-import { ExpressAdapter } from '@nestjs/platform-express';
-
-import express from 'express';
-const server = express();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+  const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
   // TODO: Will Implement in next future
@@ -32,5 +28,3 @@ async function bootstrap() {
   console.log(`Application is running on ${await app.getUrl()} 🚀`);
 }
 bootstrap();
-
-export default server;

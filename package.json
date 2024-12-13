@@ -5,11 +5,17 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "_moduleAliases": {
+  "@common": "dist/src/libs/common/src",
+  "@database": "dist/src/database",
+  "@module": "dist/src/modules",
+  "@log": "dist/src/log"
+  },
   "scripts": {
     "vercel-build": "nest build",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
+    "start": "node dist/src/main.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -45,6 +51,7 @@
     "graphql": "^16.9.0",
     "graphql-upload-minimal": "^1.6.1",
     "joi": "^17.13.3",
+    "module-alias": "^2.2.3",
     "moment-timezone": "^0.5.46",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
