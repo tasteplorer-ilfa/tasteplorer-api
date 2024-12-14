@@ -4,7 +4,6 @@ services:
       context: .
       dockerfile: ./Dockerfile
     command: pnpm run start:dev
-    platform: linux/arm64
     ports:
       - '8080:8080'
     volumes:
