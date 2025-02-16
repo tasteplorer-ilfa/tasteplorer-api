@@ -280,9 +280,6 @@ input UpdateUserInput {
   """User Fullname Field"""
   fullname: String
 
-  """User Gender Field"""
-  gender: String
-
   """User Image Field"""
   image: String
 }
@@ -311,9 +308,6 @@ type UserDto {
   """User Fullname"""
   fullname: String
 
-  """User Gender"""
-  gender: String!
-
   """User ID"""
   id: ID!
 
@@ -334,11 +328,8 @@ input UserRegisterInput {
   """User Fullname Field"""
   fullname: String!
 
-  """User Gender Field"""
-  gender: String!
-
   """User Image Field"""
-  image: String!
+  image: String
 
   """User Password Field"""
   password: String!

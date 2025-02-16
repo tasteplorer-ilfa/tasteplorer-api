@@ -12,14 +12,12 @@ export class UserRegisterInput {
   @Field(() => String, { description: 'User Password Field' })
   password: string;
 
-  @Field(() => String, { description: 'User Gender Field' })
-  gender: string;
 
   @Field(() => String, { description: 'User BirthDate Field' })
   birthDate: string;
 
-  @Field(() => String, { description: 'User Image Field' })
-  image: string;
+  @Field(() => String, { description: 'User Image Field', nullable: true })
+  image?: string;
 }
 
 @InputType()

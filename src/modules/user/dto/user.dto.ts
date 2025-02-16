@@ -13,9 +13,6 @@ export class UserDto {
   @Field(() => String, { description: 'User Fullname', nullable: true })
   fullname?: string;
 
-  @Field(() => String, { description: 'User Gender' })
-  gender: string;
-
   @Field(() => String, { description: 'User Email' })
   email: string;
 
@@ -53,8 +50,8 @@ export class UpdateUserInput {
   @Field(() => String, { description: 'User Email Field', nullable: true })
   email?: string;
 
-  @Field(() => String, { description: 'User Gender Field', nullable: true })
-  gender?: string;
+  // @Field(() => String, { description: 'User Gender Field', nullable: true })
+  // gender?: string;
 
   @Field(() => String, { description: 'User BirthDate Field' })
   birthDate: string;

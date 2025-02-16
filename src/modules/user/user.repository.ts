@@ -12,13 +12,12 @@ export class UserRepository {
   ) {}
 
   async create(input: UserRegisterInput, hashedPassword: string) {
-    const { fullname, email, image, gender, birthDate } = input;
+    const { fullname, email, image, birthDate } = input;
 
     const user = this.repository.create({
       fullname,
       email,
       image,
-      gender,
       birthDate,
       password: hashedPassword,
     });

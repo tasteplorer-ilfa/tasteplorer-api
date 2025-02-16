@@ -21,10 +21,6 @@ export const RegisterSchema = Joi.object({
     'string.empty': `Please input a stronger password. Try a mix of letters, numbers, and symbols`,
     'string.min': `Use at least 8 characters`,
   }),
-  gender: Joi.string().trim().max(1).required().messages({
-    'string.empty': `Select Gender`,
-    'string.max': 'Select Gender',
-  }),
   birthDate: Joi.date().iso().max('now'),
   image: Joi.string().allow(''),
 }).options({
