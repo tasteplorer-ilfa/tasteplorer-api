@@ -7,8 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  // TODO: Will Implement in next future
-  // app.enableCors();
+  app.enableCors();
 
   app.use((req: any, res: any, next: any) => {
     if (req.url.includes('/graphql')) {
