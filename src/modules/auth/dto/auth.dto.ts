@@ -9,9 +9,11 @@ export class UserRegisterInput {
   @Field(() => String, { description: 'User Email Field' })
   email: string;
 
+  @Field(() => String, { description: 'Username Field' })
+  username: string;
+
   @Field(() => String, { description: 'User Password Field' })
   password: string;
-
 
   @Field(() => String, { description: 'User BirthDate Field' })
   birthDate: string;
@@ -22,8 +24,8 @@ export class UserRegisterInput {
 
 @InputType()
 export class LoginInput {
-  @Field(() => String, { description: 'User Email Field' })
-  email: string;
+  @Field(() => String, { description: 'Username Field' })
+  username: string;
 
   @Field(() => String, { description: 'User Password' })
   password: string;

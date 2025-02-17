@@ -16,6 +16,9 @@ export class UserDto {
   @Field(() => String, { description: 'User Email' })
   email: string;
 
+  @Field(() => String, { description: 'Username' })
+  username: string;
+
   // ToDo: we need to add Scalar Date class custom
   @Field(() => Date, { description: 'User Birthdate' })
   birthDate: Date;
@@ -50,8 +53,8 @@ export class UpdateUserInput {
   @Field(() => String, { description: 'User Email Field', nullable: true })
   email?: string;
 
-  // @Field(() => String, { description: 'User Gender Field', nullable: true })
-  // gender?: string;
+  @Field(() => String, { description: 'Username Field', nullable: true })
+  username?: string;
 
   @Field(() => String, { description: 'User BirthDate Field' })
   birthDate: string;

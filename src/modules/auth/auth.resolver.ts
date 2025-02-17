@@ -21,8 +21,8 @@ export class AuthResolver {
   @Mutation(() => AuthPayload)
   @UsePipes(new InputValidationPipe(LoginSchema))
   async login(@Args('input') loginInput: LoginInput): Promise<AuthPayload> {
-    const { email, password } = loginInput;
+    const { username, password } = loginInput;
 
-    return this.authService.login(email, password);
+    return this.authService.login(username, password);
   }
 }
