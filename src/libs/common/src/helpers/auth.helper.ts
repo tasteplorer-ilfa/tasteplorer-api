@@ -1,10 +1,16 @@
-import { AuthenticationError } from '@nestjs/apollo';
+import { AuthenticationError, UserInputError } from '@nestjs/apollo';
 import { User } from 'src/modules/user/entities/user.entity';
 import * as bcrypt from 'bcryptjs';
 
 export function validateEmail(email: string) {
   if (email) {
     throw new Error('Email already registered!');
+  }
+}
+
+export function validateUsername(username: string) {
+  if (username) {
+    throw new UserInputError('Username already registered!');
   }
 }
 

@@ -95,11 +95,11 @@ enum EnumService {
 }
 
 input LoginInput {
-  """User Email Field"""
-  email: String!
-
   """User Password"""
   password: String!
+
+  """Username Field"""
+  username: String!
 }
 
 type MetaData {
@@ -282,6 +282,9 @@ input UpdateUserInput {
 
   """User Image Field"""
   image: String
+
+  """Username Field"""
+  username: String
 }
 
 """The `Upload` scalar type represents a file upload."""
@@ -316,6 +319,9 @@ type UserDto {
 
   """User Updated At"""
   updatedAt: String!
+
+  """Username"""
+  username: String!
 }
 
 input UserRegisterInput {
@@ -333,4 +339,7 @@ input UserRegisterInput {
 
   """User Password Field"""
   password: String!
+
+  """Username Field"""
+  username: String!
 }

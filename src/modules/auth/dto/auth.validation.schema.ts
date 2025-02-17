@@ -16,6 +16,17 @@ export const RegisterSchema = Joi.object({
       'string.email': `Email format should be ".com" or ".net"`,
       'string.empty': `Enter Email`,
     }),
+  username: Joi.string()
+    .trim()
+    .regex(/^[a-z0-9_]+$/i)
+    .min(8)
+    .required()
+    .messages({
+      'string.base': `"Username" should be a text type.`,
+      'string.empty': `Enter username.`,
+      'string.min': `Username at least 8 characters.`,
+      'string.pattern.base': `Username can only contain letters (a-z), numbers (0-9), and underscores (_)`,
+    }),
   password: Joi.string().trim().min(8).required().messages({
     'string.base': `"Password" should be a text type`,
     'string.empty': `Please input a stronger password. Try a mix of letters, numbers, and symbols`,
@@ -28,14 +39,16 @@ export const RegisterSchema = Joi.object({
 });
 
 export const LoginSchema = Joi.object({
-  email: Joi.string()
+  username: Joi.string()
     .trim()
-    .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } })
+    .regex(/^[a-z0-9_]+$/i)
+    .min(8)
     .required()
     .messages({
-      'string.base': `"Email" should be a text type`,
-      'string.email': `Email format should be ".com" or ".net"`,
-      'string.empty': `Enter Email`,
+      'string.base': `"Username" should be a text type.`,
+      'string.empty': `Enter username.`,
+      'string.min': `Username at least 8 characters.`,
+      'string.pattern.base': `Username can only contain letters (a-z), numbers (0-9), and underscores (_)`,
     }),
   password: Joi.string().trim().required().messages({
     'string.base': `"Password" should be a text type`,

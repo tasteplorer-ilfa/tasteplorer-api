@@ -3,9 +3,14 @@ import { User } from './entities/user.entity';
 import { UserRegisterInput } from 'src/modules/auth/dto/auth.dto';
 import { GraphQLError } from 'graphql';
 import { UpdateUserInput, UserDto } from './dto/user.dto';
-import { hashingPassword, validateEmail } from '@common/helpers/auth.helper';
+import {
+  hashingPassword,
+  validateEmail,
+  validateUsername,
+} from '@common/helpers/auth.helper';
 import { utcToAsiaJakarta } from '@common/utils/timezone-converter';
 import { UserRepository } from './user.repository';
+import { UserInputError } from '@nestjs/apollo';
 
 @Injectable()
 export class UserService {
@@ -16,8 +21,12 @@ export class UserService {
       const userEmail = await this.userRepository.findUserByEmail(
         userRegisterInput.email,
       );
+      const existingUsername = await this.userRepository.findUserByUsername(
+        userRegisterInput.username,
+      );
 
       validateEmail(userEmail?.email);
+      validateUsername(existingUsername?.username);
 
       const hashedPassword = await hashingPassword(userRegisterInput.password);
 
@@ -37,6 +46,10 @@ export class UserService {
 
       return userDto;
     } catch (error) {
+      if (error instanceof UserInputError) {
+        throw new UserInputError(error.message);
+      }
+
       throw new GraphQLError(error.message);
     }
   }
@@ -51,6 +64,12 @@ export class UserService {
         userUpdateInput.email,
       );
 
+      const existingUsername =
+        await this.userRepository.findUserByIdAndUsername(
+          id,
+          userUpdateInput.username,
+        );
+
       if (!existingUser) {
         throw new NotFoundException('User not found.');
       }
@@ -62,6 +81,16 @@ export class UserService {
 
         if (existingEmail) {
           validateEmail(existingEmail.email);
+        }
+      }
+
+      if (!existingUsername) {
+        const user = await this.userRepository.findUserByUsername(
+          userUpdateInput.username,
+        );
+
+        if (user) {
+          validateUsername(user.username);
         }
       }
 
@@ -105,5 +134,9 @@ export class UserService {
 
   async findByEmail(email: string): Promise<User> {
     return this.userRepository.findByEmail(email);
+  }
+
+  async findByUsername(username: string): Promise<User> {
+    return this.userRepository.findByUsername(username);
   }
 }

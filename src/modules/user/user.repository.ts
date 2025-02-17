@@ -12,11 +12,12 @@ export class UserRepository {
   ) {}
 
   async create(input: UserRegisterInput, hashedPassword: string) {
-    const { fullname, email, image, birthDate } = input;
+    const { fullname, email, username, image, birthDate } = input;
 
     const user = this.repository.create({
       fullname,
       email,
+      username,
       image,
       birthDate,
       password: hashedPassword,
@@ -66,6 +67,33 @@ export class UserRepository {
       .createQueryBuilder('users')
       .where('users.email = :email', { email })
       .andWhere('users.deleted_at IS NULL')
+      .getOne();
+  }
+
+  // Find user by username with user.deleted_at is null restriction
+  async findByUsername(username: string): Promise<User> {
+    return this.repository
+      .createQueryBuilder('users')
+      .where('users.username = :username', { username })
+      .andWhere('users.deleted_at IS NULL')
+      .getOne();
+  }
+
+  // Find user by username without user.deleted_at is null restriction
+  async findUserByUsername(username: string): Promise<User> {
+    return this.repository
+      .createQueryBuilder('users')
+      .select(['users.username'])
+      .where('users.username = :username', { username })
+      .getOne();
+  }
+
+  async findUserByIdAndUsername(id: number, username: string): Promise<User> {
+    return this.repository
+      .createQueryBuilder('users')
+      .select(['users.id', 'users.username'])
+      .where('users.id = :id', { id })
+      .andWhere('users.username = :username', { username })
       .getOne();
   }
 }
