@@ -1,4 +1,4 @@
-import { UserDto } from '@module/user/dto/user.dto';
+import { ProfileDTO } from '@module/user/dto/user.dto';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt';
@@ -20,9 +20,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: number }): Promise<UserDto> {
+  async validate(payload: { sub: number }): Promise<ProfileDTO> {
     try {
-      const user: UserDto = await this.userService.findById(payload.sub);
+      const user: ProfileDTO = await this.userService.findById(payload.sub);
 
       if (!user) {
         throw new UnauthorizedException();
