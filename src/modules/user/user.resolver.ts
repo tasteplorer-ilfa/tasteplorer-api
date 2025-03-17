@@ -1,5 +1,5 @@
-import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
-import { UpdateUserInput, UserDto } from './dto/user.dto';
+import { Resolver, Query, Mutation, Args, ID, Int } from '@nestjs/graphql';
+import { ProfileDTO, UpdateUserInput, UserDto } from './dto/user.dto';
 import { UserService } from './user.service';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '@module/auth/guards/jwt-auth.guard';
@@ -12,9 +12,9 @@ import { TokenPayload } from '@common/dto/tokenPayload.dto';
 export class UserResolver {
   constructor(private readonly userService: UserService) {}
 
-  @Query(() => UserDto, { name: 'currentUser' })
+  @Query(() => ProfileDTO, { name: 'currentUser' })
   @UseGuards(JwtAuthGuard)
-  currentUser(@CurrentUser() user: TokenPayload): Promise<UserDto> {
+  async currentUser(@CurrentUser() user: TokenPayload) {
     return this.userService.findById(user.sub);
   }
 
@@ -26,5 +26,26 @@ export class UserResolver {
     updateUserInput: UpdateUserInput,
   ): Promise<UserDto> {
     return this.userService.update(id, updateUserInput);
+  }
+
+  // Handling User Follow
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => Boolean)
+  async followUser(
+    @Args('followerId', { type: () => Int }) followerId: number,
+    @Args('followingId', { type: () => Int }) followingId: number,
+  ) {
+    await this.userService.followUser(followerId, followingId);
+    return true;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => Boolean)
+  async unfollowUser(
+    @Args('followerId', { type: () => Int }) followerId: number,
+    @Args('followingId', { type: () => Int }) followingId: number,
+  ) {
+    await this.userService.unFollowUser(followerId, followingId);
+    return true;
   }
 }

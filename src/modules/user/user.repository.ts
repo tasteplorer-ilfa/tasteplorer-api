@@ -3,12 +3,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { UserRegisterInput } from '@module/auth/dto/auth.dto';
+import { UserFollow } from './entities/user-follow.entity';
+import { UserFollowDTO, UserFollowListData } from './dto/user.dto';
 
 @Injectable()
 export class UserRepository {
   constructor(
     @InjectRepository(User)
     private readonly repository: Repository<User>,
+
+    @InjectRepository(UserFollow)
+    private readonly userFollowRepository: Repository<UserFollow>,
   ) {}
 
   async create(input: UserRegisterInput, hashedPassword: string) {
@@ -55,11 +60,31 @@ export class UserRepository {
   }
 
   async findById(id: number) {
-    return this.repository
+    const result = await this.repository
       .createQueryBuilder('users')
+      .leftJoinAndSelect('users.followers', 'followers')
+      .leftJoinAndSelect('followers.follower', 'followerUser')
+      .leftJoinAndSelect('users.following', 'following')
+      .leftJoinAndSelect('following.following', 'followingUser')
       .where('users.id = :id', { id: id })
       .andWhere('users.deleted_at IS NULL')
       .getOne();
+
+    if (!result) return null;
+
+    delete result.password;
+
+    return {
+      ...result,
+      followers: new UserFollowListData({
+        total: result.followers.length,
+        data: result.followers.map((f) => new UserFollowDTO(f.follower)),
+      }),
+      following: new UserFollowListData({
+        total: result.following.length,
+        data: result.following.map((f) => new UserFollowDTO(f.following)),
+      }),
+    };
   }
 
   async findByEmail(email: string) {
@@ -95,5 +120,37 @@ export class UserRepository {
       .where('users.id = :id', { id })
       .andWhere('users.username = :username', { username })
       .getOne();
+  }
+
+  /**
+   * Handling User Follow
+   */
+  async isFollowing(followerId: number, followingId: number): Promise<boolean> {
+    const count = await this.userFollowRepository
+      .createQueryBuilder('uf')
+      .where('uf.follower_id = :followerId', { followerId })
+      .andWhere('uf.following_id = :followingId', { followingId })
+      .getCount();
+
+    return count > 0;
+  }
+
+  async createUserFollow(followerId: number, followingId: number) {
+    const follow = this.userFollowRepository.create({
+      follower: { id: followerId },
+      following: { id: followingId },
+    });
+
+    return this.userFollowRepository.save(follow);
+  }
+
+  async findOneUserFollow(followerId: number, followingId: number) {
+    return this.userFollowRepository.findOne({
+      where: { follower: { id: followerId }, following: { id: followingId } },
+    });
+  }
+
+  async removeFollowRelationship(user: UserFollow) {
+    return this.userFollowRepository.remove(user);
   }
 }

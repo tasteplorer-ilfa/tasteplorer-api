@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { UserRegisterInput } from 'src/modules/auth/dto/auth.dto';
 import { GraphQLError } from 'graphql';
-import { UpdateUserInput, UserDto } from './dto/user.dto';
+import { ProfileDTO, UpdateUserInput, UserDto } from './dto/user.dto';
 import {
   hashingPassword,
   validateEmail,
@@ -11,6 +16,7 @@ import {
 import { utcToAsiaJakarta } from '@common/utils/timezone-converter';
 import { UserRepository } from './user.repository';
 import { UserInputError } from '@nestjs/apollo';
+import { UserFollow } from './entities/user-follow.entity';
 
 @Injectable()
 export class UserService {
@@ -113,20 +119,20 @@ export class UserService {
     }
   }
 
-  async findById(id: number): Promise<UserDto> {
+  async findById(id: number) {
     try {
       const user = await this.userRepository.findById(id);
 
       const createdAt: string = utcToAsiaJakarta(user.createdAt);
       const updatedAt: string = utcToAsiaJakarta(user.updatedAt);
 
-      const userDto: UserDto = new UserDto({
+      const result: ProfileDTO = new ProfileDTO({
         ...user,
         createdAt,
         updatedAt,
       });
 
-      return userDto;
+      return result;
     } catch (error) {
       throw new GraphQLError(error.message);
     }
@@ -138,5 +144,49 @@ export class UserService {
 
   async findByUsername(username: string): Promise<User> {
     return this.userRepository.findByUsername(username);
+  }
+
+  // Handling User Follow Logic
+  async followUser(
+    followerId: number,
+    followingId: number,
+  ): Promise<UserFollow> {
+    if (followerId === followingId) {
+      throw new BadRequestException('You cannot follow yourself.');
+    }
+
+    const isAlreadyFollowing = await this.userRepository.isFollowing(
+      followerId,
+      followingId,
+    );
+
+    if (isAlreadyFollowing) {
+      throw new ConflictException('You are already following this user.');
+    }
+
+    const existingUser = await this.userRepository.findById(followingId);
+
+    if (!existingUser) {
+      throw new NotFoundException('User not found.');
+    }
+
+    return this.userRepository.createUserFollow(followerId, followingId);
+  }
+
+  async unFollowUser(
+    followerId: number,
+    followingId: number,
+  ): Promise<boolean> {
+    const follow = await this.userRepository.findOneUserFollow(
+      followerId,
+      followingId,
+    );
+
+    if (!follow) {
+      throw new NotFoundException('Follow relationship not found.');
+    }
+
+    await this.userRepository.removeFollowRelationship(follow);
+    return true;
   }
 }
