@@ -173,6 +173,7 @@ type Query {
   myRecipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
   recipeDetail(id: Int!): RecipeDto!
   recipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
+  userProfile(id: ID!): ProfileDTO!
 }
 
 type RecipeDto {

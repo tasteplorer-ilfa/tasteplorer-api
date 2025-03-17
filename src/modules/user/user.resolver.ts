@@ -18,6 +18,12 @@ export class UserResolver {
     return this.userService.findById(user.sub);
   }
 
+  @Query(() => ProfileDTO, { name: 'userProfile' })
+  @UseGuards(JwtAuthGuard)
+  async userProfile(@Args('id', { type: () => ID }) id: number) {
+    return this.userService.findById(id);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Mutation(() => UserDto)
   async updateUser(
