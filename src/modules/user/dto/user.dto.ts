@@ -1,5 +1,5 @@
 import { MetaData } from '@common/dto/metaData.dto';
-import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
+import { ObjectType, Field, ID, InputType, Int } from '@nestjs/graphql';
 
 @ObjectType()
 export class UserDto {
@@ -37,6 +37,34 @@ export class UserDto {
 }
 
 @ObjectType()
+export class ProfileDTO extends UserDto {
+  @Field(() => UserFollowListData, {
+    description: 'List of followers',
+    nullable: true,
+  })
+  followers: () => UserFollowListData;
+
+  @Field(() => UserFollowListData, { description: 'List of following users' })
+  following: () => UserFollowListData;
+}
+
+@ObjectType()
+export class UserFollowDTO {
+  constructor(entity: Partial<UserFollowDTO>) {
+    Object.assign(this, entity);
+  }
+
+  @Field(() => ID, { description: 'User ID' })
+  id: number;
+
+  @Field(() => String, { description: 'Username' })
+  username: string;
+
+  @Field(() => String, { description: 'User Image', nullable: true })
+  image?: string;
+}
+
+@ObjectType()
 export class UserListData {
   @Field(() => [UserDto], { description: 'Users data' })
   users: UserDto[];
@@ -45,6 +73,18 @@ export class UserListData {
   meta: MetaData;
 }
 
+@ObjectType()
+export class UserFollowListData {
+  constructor(entity: Partial<UserFollowListData>) {
+    Object.assign(this, entity);
+  }
+
+  @Field(() => [UserFollowDTO], { description: 'Users Follow data' })
+  data: UserFollowDTO[];
+
+  @Field(() => Int, { description: 'Total of users' })
+  total: number;
+}
 @InputType()
 export class UpdateUserInput {
   @Field(() => String, { description: 'User Fullname Field', nullable: true })

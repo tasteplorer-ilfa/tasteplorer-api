@@ -7,16 +7,17 @@ import {
   OneToMany,
   UpdateDateColumn,
 } from 'typeorm';
+import { UserFollow } from './user-follow.entity';
 
 @Entity({ name: 'users' })
 export class User extends AbstractEntity<User> {
   @Column()
   fullname: string;
 
-  @Column()
+  @Column({ unique: true })
   username: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
   @Column()
@@ -45,12 +46,14 @@ export class User extends AbstractEntity<User> {
   @Column({ name: 'deleted_at', nullable: true })
   deletedAt: Date;
 
-  // ToDo: we will add recipe relationship OneToMany below
-  // @OneToMany(() => Recipe, (recipe) => recipe.userId, { cascade: true })
-  // recipes: Recipe[];
-
   @OneToMany(() => Recipe, (recipe) => recipe.user, {
     cascade: true,
   })
   recipes: Recipe[];
+
+  @OneToMany(() => UserFollow, (follow) => follow.follower)
+  following: UserFollow[];
+
+  @OneToMany(() => UserFollow, (follow) => follow.following)
+  followers: UserFollow[];
 }

@@ -118,12 +118,49 @@ type MetaData {
 
 type Mutation {
   createRecipe(input: RecipeInput!): RecipeDto!
+  followUser(followerId: Int!, followingId: Int!): Boolean!
   login(input: LoginInput!): AuthPayload!
   register(input: UserRegisterInput!): AuthPayload!
   removeRecipe(id: Int!): String!
+  unfollowUser(followerId: Int!, followingId: Int!): Boolean!
   updateRecipe(id: ID!, input: RecipeInput!): RecipeDto!
   updateUser(id: ID!, input: UpdateUserInput!): UserDto!
   uploadSingleFile(file: Upload!, setting: UploadParamInput!): CloudinaryResponseDto!
+}
+
+type ProfileDTO {
+  """User Birthdate"""
+  birthDate: Date!
+
+  """User Created At"""
+  createdAt: String!
+
+  """User Deleted At"""
+  deletedAt: Date
+
+  """User Email"""
+  email: String!
+
+  """List of followers"""
+  followers: UserFollowListData
+
+  """List of following users"""
+  following: UserFollowListData!
+
+  """User Fullname"""
+  fullname: String
+
+  """User ID"""
+  id: ID!
+
+  """User Image"""
+  image: String
+
+  """User Updated At"""
+  updatedAt: String!
+
+  """Username"""
+  username: String!
 }
 
 type Query {
@@ -131,11 +168,12 @@ type Query {
   articleList(page: Float!, pageSize: Float!): ArticleListDto!
   bannerDetail(id: Int!): BannerDto!
   bannerList(page: Int!, pageSize: Int!): BannerListDto!
-  currentUser: UserDto!
+  currentUser: ProfileDTO!
   myRecipeDetail(id: Int!): RecipeDto!
   myRecipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
   recipeDetail(id: Int!): RecipeDto!
   recipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
+  userProfile(id: ID!): ProfileDTO!
 }
 
 type RecipeDto {
@@ -322,6 +360,25 @@ type UserDto {
 
   """Username"""
   username: String!
+}
+
+type UserFollowDTO {
+  """User ID"""
+  id: ID!
+
+  """User Image"""
+  image: String
+
+  """Username"""
+  username: String!
+}
+
+type UserFollowListData {
+  """Users Follow data"""
+  data: [UserFollowDTO!]!
+
+  """Total of users"""
+  total: Int!
 }
 
 input UserRegisterInput {
