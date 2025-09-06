@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+      target: development
     command: pnpm run start:dev
     ports:
       - '8080:8080'
@@ -10,7 +11,7 @@ services:
       - .:/usr/src/app
     networks:
       - app-network
-      - infra_mynetwork
+      - rabbitmq-server_rabbitmq-network-dev
     env_file:
       - .env
 
@@ -18,5 +19,5 @@ volumes:
   .:
 networks:
   app-network:
-  infra_mynetwork:
+  rabbitmq-server_rabbitmq-network-dev:
     external: true
