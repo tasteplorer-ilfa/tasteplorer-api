@@ -8,6 +8,7 @@ import { RecipeInstruction } from './entities/recipe-instruction.entity';
 import { RecipeMedia } from './entities/recipe-media.entity';
 import { AuthModule } from '@module/auth/auth.module';
 import { RecipeRepository } from './recipe.repository';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { RecipeRepository } from './recipe.repository';
       RecipeMedia,
     ]),
     AuthModule,
+    HttpModule,
   ],
   providers: [RecipeResolver, RecipeService, RecipeRepository],
 })

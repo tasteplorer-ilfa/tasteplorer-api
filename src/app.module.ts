@@ -16,6 +16,7 @@ import { UploadFileModule } from '@module/upload-file/upload-file.module';
 import { CustomLoggerService } from '@log/logger.service';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { GraphqlLoggingInterceptor } from '@log/graphql-logging.interceptor';
+import { RabbitMQModule } from '@module/rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { GraphqlLoggingInterceptor } from '@log/graphql-logging.interceptor';
     ArticleModule,
     RecipeModule,
     UploadFileModule,
+    RabbitMQModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -17,10 +18,14 @@ import { utcToAsiaJakarta } from '@common/utils/timezone-converter';
 import { UserRepository } from './user.repository';
 import { UserInputError } from '@nestjs/apollo';
 import { UserFollow } from './entities/user-follow.entity';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class UserService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(
+    private userRepository: UserRepository,
+    @Inject('RABBITMQ_SERVICE') private readonly rabbitMQClient: ClientProxy,
+  ) {}
 
   async create(userRegisterInput: UserRegisterInput): Promise<UserDto> {
     try {
@@ -169,6 +174,15 @@ export class UserService {
     if (!existingUser) {
       throw new NotFoundException('User not found.');
     }
+
+    // 🔥 Send event to Notification Service through RabbitMQ
+    this.rabbitMQClient.emit('user.followed', {
+      followerId,
+      followingId,
+      message: `error User ${followerId} followed user ${followingId}`,
+    });
+
+    console.log('success publish message rabbitmq yuhuu');
 
     return this.userRepository.createUserFollow(followerId, followingId);
   }

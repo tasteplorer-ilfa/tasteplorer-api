@@ -34,19 +34,45 @@ export class RecipeService {
     }
   }
 
-  async findAll(page: number, pageSize: number): Promise<RecipeListDataDto> {
+  async findAll(
+    page: number,
+    pageSize: number,
+    search: string,
+  ): Promise<RecipeListDataDto> {
     maxPageValidation(pageSize);
+
     const offset = setPage(page, pageSize);
 
     try {
-      const [data, total] = await this.recipeRepository.findAll(
-        offset,
-        pageSize,
-      );
+      let data = null;
+      let total = 0;
+
+      if (search && search !== '') {
+        [data, total] = await this.recipeRepository.searchRecipes(
+          search,
+          page,
+          pageSize,
+        );
+        console.log(
+          'resultnyo: ',
+          await this.recipeRepository.searchRecipes(search, page, pageSize),
+        );
+        console.log('imageDTO: ', data[0]);
+      } else {
+        [data, total] = await this.recipeRepository.findAll(offset, pageSize);
+      }
+
+      // [data, total] = await this.recipeRepository.findAll(offset, pageSize);
 
       const recipes: RecipeDto[] = data.map((recipe) => {
+        console.log('recipeCreatedAt: ', recipe.createdAt);
+
         const createdAt: string = utcToAsiaJakarta(recipe.createdAt);
+        console.log('cnvtredCreatedAt: ', createdAt);
+
         const updatedAt: string = utcToAsiaJakarta(recipe.updatedAt);
+
+        console.log('ing: ', recipe.ingredients);
 
         const ingredients = recipe.ingredients.map((ingredient) => {
           const recipeIngredientDto: RecipeIngredientDto =
@@ -75,6 +101,8 @@ export class RecipeService {
           createdAt: utcToAsiaJakarta(recipe.image.createdAt),
           updatedAt: utcToAsiaJakarta(recipe.image.updatedAt),
         });
+
+        console.log('imageNyo: ', image);
 
         const author: UserDto = new UserDto({
           ...recipe.user,
@@ -109,6 +137,8 @@ export class RecipeService {
 
       return recipeList;
     } catch (error) {
+      console.log('errNih: ', error);
+
       throw new GraphQLError(error.message);
     }
   }

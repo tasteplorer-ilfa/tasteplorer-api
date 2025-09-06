@@ -7,9 +7,14 @@ import { User } from './entities/user.entity';
 import { AuthModule } from '@module/auth/auth.module';
 import { UserRepository } from './user.repository';
 import { UserFollow } from './entities/user-follow.entity';
+import { RabbitMQModule } from '@module/rabbitmq/rabbitmq.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserFollow]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([User, UserFollow]),
+    AuthModule,
+    RabbitMQModule,
+  ],
   providers: [UserResolver, UserService, DateScalar, UserRepository],
   exports: [UserService],
 })

@@ -6,13 +6,17 @@ import { RecipeDto, RecipeInput } from './dto/recipe.dto';
 import { RecipeIngredient } from './entities/recipe-ingredient.entity';
 import { RecipeInstruction } from './entities/recipe-instruction.entity';
 import { RecipeMedia } from './entities/recipe-media.entity';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class RecipeRepository {
+  private readonly searchServiceUrl = 'http://search-service:9000/api/search';
   constructor(
     @InjectRepository(Recipe)
     private readonly repository: Repository<Recipe>,
     private readonly entityManager: EntityManager,
+    private httpService: HttpService,
   ) {}
 
   async create(input: RecipeInput, userId: number) {
@@ -277,5 +281,21 @@ export class RecipeRepository {
       })
       .where('id = :id', { id })
       .execute();
+  }
+
+  async searchRecipes(keyword: string, page: number, limit: number) {
+    try {
+      const response$ = this.httpService.get(this.searchServiceUrl, {
+        params: { keyword, page, limit },
+      });
+
+      const response = await firstValueFrom(response$);
+      console.log('responseSearchService: ', response.data);
+      return [response.data.recipes.data, response.data.recipes.total];
+    } catch (error) {
+      console.log('errorBro: ', error);
+
+      throw new Error(`Search service error ${error.message}`);
+    }
   }
 }
