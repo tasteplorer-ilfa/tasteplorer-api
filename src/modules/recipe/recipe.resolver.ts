@@ -50,8 +50,9 @@ export class RecipeResolver {
   async recipeList(
     @Args('page', { type: () => Int }) page: number,
     @Args('pageSize', { type: () => Int }) pageSize: number,
+    @Args('search', { type: () => String, nullable: true }) search: string,
   ): Promise<RecipeListDataDto> {
-    return this.recipeService.findAll(page, pageSize);
+    return this.recipeService.findAll(page, pageSize, search);
   }
 
   @Query(() => RecipeDto, { name: 'recipeDetail' })

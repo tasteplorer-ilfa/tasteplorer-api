@@ -172,7 +172,7 @@ type Query {
   myRecipeDetail(id: Int!): RecipeDto!
   myRecipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
   recipeDetail(id: Int!): RecipeDto!
-  recipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
+  recipeList(page: Int!, pageSize: Int!, search: String): RecipeListDataDto!
   userProfile(id: ID!): ProfileDTO!
 }
 
