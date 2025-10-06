@@ -29,5 +29,6 @@ RUN npm install -g pnpm \
   && pnpm store prune \
   && rm -rf /root/.npm /root/.pnpm-store
 COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/proto ./proto
 EXPOSE 8080
 CMD ["pnpm", "run", "start"]

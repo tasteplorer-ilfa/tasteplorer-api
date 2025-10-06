@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package search;
+
+service SearchService {
+  rpc SearchRecipes (SearchRequest) returns (SearchResponse);
+}
+
+message SearchRequest {
+  string keyword = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message SearchResponse {
+  RecipeData recipes = 1;
+}
+
+message RecipeData {
+  repeated Recipe data = 1;
+  int32 total = 2;
+}
+
+message Recipe {
+  int32 id = 1;
+  string title = 2;
+  string description = 3;
+  int32 servings = 4;
+  int32 cookingTime = 5;
+  int32 userId = 6;
+  bool isFavorite = 7;
+  string createdAt = 8;
+  string updatedAt = 9;
+  repeated RecipeIngredient ingredients = 10;
+  repeated RecipeInstruction instructions = 11;
+  RecipeMedia image = 12;
+  User user = 13;
+}
+
+message RecipeIngredient {
+  int32 id = 1;
+  string ingredient = 2;
+  int32 recipeId = 3;
+  string createdAt = 4;
+  string updatedAt = 5;
+}
+
+message RecipeInstruction {
+  int32 id = 1;
+  string instruction = 2;
+  int32 recipeId = 3;
+  string createdAt = 4;
+  string updatedAt = 5;
+}
+
+message RecipeMedia {
+  int32 id = 1;
+  string url = 2;
+  int32 recipeId = 3;
+  string createdAt = 4;
+  string updatedAt = 5;
+}
+
+message User {
+  int32 id = 1;
+  string username = 2;
+  string email = 3;
+  string createdAt = 4;
+  string updatedAt = 5;
+}
