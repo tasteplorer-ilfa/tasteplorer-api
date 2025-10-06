@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Recipe } from './entities/recipe.entity';
 import { EntityManager, Repository } from 'typeorm';
@@ -6,18 +6,25 @@ import { RecipeDto, RecipeInput } from './dto/recipe.dto';
 import { RecipeIngredient } from './entities/recipe-ingredient.entity';
 import { RecipeInstruction } from './entities/recipe-instruction.entity';
 import { RecipeMedia } from './entities/recipe-media.entity';
-import { HttpService } from '@nestjs/axios';
+import { ClientGrpc } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import { SearchRequest, SearchService } from './grpc/search.interface';
 
 @Injectable()
-export class RecipeRepository {
-  private readonly searchServiceUrl = 'http://search-service:9000/api/search';
+export class RecipeRepository implements OnModuleInit {
+  private searchService: SearchService;
+
   constructor(
     @InjectRepository(Recipe)
     private readonly repository: Repository<Recipe>,
     private readonly entityManager: EntityManager,
-    private httpService: HttpService,
+    @Inject('SEARCH_SERVICE') private readonly searchClient: ClientGrpc,
   ) {}
+
+  onModuleInit() {
+    this.searchService =
+      this.searchClient.getService<SearchService>('SearchService');
+  }
 
   async create(input: RecipeInput, userId: number) {
     const {
@@ -283,19 +290,37 @@ export class RecipeRepository {
       .execute();
   }
 
-  async searchRecipes(keyword: string, page: number, limit: number) {
+  async searchRecipes(
+    keyword: string,
+    page: number,
+    limit: number,
+  ): Promise<[any[], number]> {
     try {
-      const response$ = this.httpService.get(this.searchServiceUrl, {
-        params: { keyword, page, limit },
-      });
+      const searchRequest: SearchRequest = {
+        keyword,
+        page,
+        limit,
+      };
 
-      const response = await firstValueFrom(response$);
-      console.log('responseSearchService: ', response.data);
-      return [response.data.recipes.data, response.data.recipes.total];
+      const response = await firstValueFrom(
+        this.searchService.searchRecipes(searchRequest),
+      );
+
+      console.log('responseSearchService: ', response);
+
+      // Handle cases where response or nested properties are undefined
+      if (!response || !response.recipes) {
+        console.log('No response or recipes found, returning empty results');
+        return [[], 0];
+      }
+
+      // Return the data with fallback to empty array and 0 count
+      return [response.recipes.data || [], response.recipes.total || 0];
     } catch (error) {
       console.log('errorBro: ', error);
-
-      throw new Error(`Search service error ${error.message}`);
+      // Return empty results instead of throwing error for better UX
+      console.log('Search service error, returning empty results');
+      return [[], 0];
     }
   }
 }

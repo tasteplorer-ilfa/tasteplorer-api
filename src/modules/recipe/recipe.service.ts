@@ -44,25 +44,27 @@ export class RecipeService {
     const offset = setPage(page, pageSize);
 
     try {
-      let data = null;
+      let data: any[] = [];
       let total = 0;
 
       if (search && search !== '') {
-        [data, total] = await this.recipeRepository.searchRecipes(
+        const searchResult = await this.recipeRepository.searchRecipes(
           search,
           page,
           pageSize,
         );
+        data = searchResult[0];
+        total = searchResult[1];
         console.log(
           'resultnyo: ',
           await this.recipeRepository.searchRecipes(search, page, pageSize),
         );
         console.log('imageDTO: ', data[0]);
       } else {
-        [data, total] = await this.recipeRepository.findAll(offset, pageSize);
+        const dbResult = await this.recipeRepository.findAll(offset, pageSize);
+        data = dbResult[0];
+        total = dbResult[1];
       }
-
-      // [data, total] = await this.recipeRepository.findAll(offset, pageSize);
 
       const recipes: RecipeDto[] = data.map((recipe) => {
         console.log('recipeCreatedAt: ', recipe.createdAt);
