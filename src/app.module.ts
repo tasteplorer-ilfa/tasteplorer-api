@@ -26,6 +26,7 @@ import { RabbitMQModule } from '@module/rabbitmq/rabbitmq.module';
       autoSchemaFile: join(process.cwd(), '/schema.gql'),
       sortSchema: true,
       playground: true,
+      csrfPrevention: false,
       // installSubscriptionHandlers: true,
       // buildSchemaOptions: {
       //   directives: [
