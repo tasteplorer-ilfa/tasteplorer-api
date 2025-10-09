@@ -4,6 +4,7 @@ export enum EnumFolder {
   ARTICLE = 'articles',
   BANNER = 'banners',
   RECIPE = 'recipes',
+  USER = 'users',
 }
 
 export enum EnumService {

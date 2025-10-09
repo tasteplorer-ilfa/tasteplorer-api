@@ -85,6 +85,7 @@ enum EnumFolder {
   ARTICLE
   BANNER
   RECIPE
+  USER
 }
 
 """Enum service which storage service that will be used"""
