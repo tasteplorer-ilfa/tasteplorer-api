@@ -48,11 +48,12 @@ export class RecipeResolver {
 
   @Query(() => RecipeListDataDto, { name: 'recipeList' })
   async recipeList(
-    @Args('page', { type: () => Int }) page: number,
-    @Args('pageSize', { type: () => Int }) pageSize: number,
+    @Args('after', { type: () => String, nullable: true }) after: string,
+    @Args('limit', { type: () => Int, nullable: true, defaultValue: 10 })
+    limit: number,
     @Args('search', { type: () => String, nullable: true }) search: string,
   ): Promise<RecipeListDataDto> {
-    return this.recipeService.findAll(page, pageSize, search);
+    return this.recipeService.findAll(after, limit, search);
   }
 
   @Query(() => RecipeDto, { name: 'recipeDetail' })

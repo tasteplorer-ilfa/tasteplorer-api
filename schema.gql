@@ -105,16 +105,22 @@ input LoginInput {
 
 type MetaData {
   """current page of a list data"""
-  currentPage: Int!
+  currentPage: Int
+
+  """Base64 encoded cursor of last item"""
+  endCursor: String
+
+  """Is there next page?"""
+  hasNextPage: Boolean
 
   """page size of a list data"""
-  pageSize: Int!
+  pageSize: Int
 
   """total data of list data"""
   total: Int!
 
   """total page of a list data"""
-  totalPage: Int!
+  totalPage: Int
 }
 
 type Mutation {
@@ -173,7 +179,7 @@ type Query {
   myRecipeDetail(id: Int!): RecipeDto!
   myRecipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
   recipeDetail(id: Int!): RecipeDto!
-  recipeList(page: Int!, pageSize: Int!, search: String): RecipeListDataDto!
+  recipeList(after: String, limit: Int = 10, search: String): RecipeListDataDto!
   userProfile(id: ID!): ProfileDTO!
 }
 

@@ -9,6 +9,7 @@ import { RecipeMedia } from './entities/recipe-media.entity';
 import { ClientGrpc } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { SearchRequest, SearchService } from './grpc/search.interface';
+import { encodeCursor, decodeCursor } from '@common/utils/cursor';
 
 @Injectable()
 export class RecipeRepository implements OnModuleInit {
@@ -105,8 +106,9 @@ export class RecipeRepository implements OnModuleInit {
     });
   }
 
-  async findAll(offset: number, limit: number) {
-    return this.repository
+  async findAll({ after, limit = 25 }: { after?: string; limit?: number }) {
+    // Query builder untuk data (pakai after/cursor)
+    const qb = this.repository
       .createQueryBuilder('recipes')
       .innerJoinAndSelect(
         'recipes.ingredients',
@@ -120,11 +122,43 @@ export class RecipeRepository implements OnModuleInit {
       )
       .innerJoinAndSelect('recipes.image', 'image', 'image.deleted_at IS NULL')
       .innerJoinAndSelect('recipes.user', 'user')
-      .where('recipes.deleted_at IS NULL')
-      .orderBy('recipes.createdAt', 'DESC')
-      .skip(offset)
-      .take(limit)
-      .getManyAndCount();
+      .where('recipes.deleted_at IS NULL');
+
+    if (after) {
+      const afterDate = decodeCursor(after);
+      qb.andWhere('recipes.createdAt < :after', { after: afterDate });
+    }
+    qb.orderBy('recipes.createdAt', 'DESC').take(limit + 1);
+
+    // Query builder untuk count (hanya filter global, TANPA after/cursor)
+    const countQb = this.repository
+      .createQueryBuilder('recipes')
+      .where('recipes.deleted_at IS NULL');
+
+    const [total, recipes] = await Promise.all([
+      countQb.getCount(),
+      qb.getMany(),
+    ]);
+
+    const hasNextPage = recipes.length > limit;
+    const nodes = recipes.slice(0, limit);
+    const endCursor =
+      nodes.length > 0
+        ? encodeCursor(nodes[nodes.length - 1].createdAt)
+        : undefined;
+    const totalPage = Math.ceil(total / limit);
+
+    return {
+      recipes: nodes,
+      meta: {
+        total,
+        totalPage,
+        pageSize: limit,
+        currentPage: 0,
+        ...(endCursor && { endCursor }),
+        ...(hasNextPage ? { hasNextPage } : {}),
+      },
+    };
   }
 
   async findById(id: number) {
@@ -292,13 +326,20 @@ export class RecipeRepository implements OnModuleInit {
 
   async searchRecipes(
     keyword: string,
-    page: number,
+    cursor: string | undefined,
     limit: number,
-  ): Promise<[any[], number]> {
+  ): Promise<
+    [
+      { data: any[]; endCursor?: string; hasNextPage?: boolean },
+      number,
+      string?,
+      boolean?,
+    ]
+  > {
     try {
       const searchRequest: SearchRequest = {
         keyword,
-        page,
+        cursor,
         limit,
       };
 
@@ -306,21 +347,33 @@ export class RecipeRepository implements OnModuleInit {
         this.searchService.searchRecipes(searchRequest),
       );
 
-      console.log('responseSearchService: ', response);
-
       // Handle cases where response or nested properties are undefined
       if (!response || !response.recipes) {
-        console.log('No response or recipes found, returning empty results');
-        return [[], 0];
+        return [
+          { data: [], endCursor: undefined, hasNextPage: false },
+          0,
+          undefined,
+          false,
+        ];
       }
 
-      // Return the data with fallback to empty array and 0 count
-      return [response.recipes.data || [], response.recipes.total || 0];
+      return [
+        {
+          data: response.recipes.data || [],
+          endCursor: response.recipes.endCursor,
+          hasNextPage: response.recipes.hasNextPage,
+        },
+        response.recipes.total || 0,
+        response.recipes.endCursor,
+        response.recipes.hasNextPage,
+      ];
     } catch (error) {
-      console.log('errorBro: ', error);
-      // Return empty results instead of throwing error for better UX
-      console.log('Search service error, returning empty results');
-      return [[], 0];
+      return [
+        { data: [], endCursor: undefined, hasNextPage: false },
+        0,
+        undefined,
+        false,
+      ];
     }
   }
 }
