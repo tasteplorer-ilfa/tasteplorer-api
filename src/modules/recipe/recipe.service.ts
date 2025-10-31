@@ -35,114 +35,84 @@ export class RecipeService {
   }
 
   async findAll(
-    page: number,
-    pageSize: number,
-    search: string,
+    after?: string,
+    limit: number = 25,
+    search?: string,
   ): Promise<RecipeListDataDto> {
-    maxPageValidation(pageSize);
-
-    const offset = setPage(page, pageSize);
-
     try {
-      let data: any[] = [];
-      let total = 0;
+      let recipes: RecipeDto[] = [];
+      let meta: MetaData;
 
       if (search && search !== '') {
-        const searchResult = await this.recipeRepository.searchRecipes(
-          search,
-          page,
-          pageSize,
-        );
-        data = searchResult[0];
-        total = searchResult[1];
-        console.log(
-          'resultnyo: ',
-          await this.recipeRepository.searchRecipes(search, page, pageSize),
-        );
-        console.log('imageDTO: ', data[0]);
+        const [result, total, endCursor, hasNextPage] =
+          await this.recipeRepository.searchRecipes(
+            search,
+            after, // use after as a cursor
+            limit,
+          );
+        recipes = result.data.map((recipe) => this.mapRecipeDto(recipe));
+        meta = {
+          total,
+          ...(endCursor && { endCursor }),
+          ...(hasNextPage !== undefined ? { hasNextPage } : {}),
+        };
       } else {
-        const dbResult = await this.recipeRepository.findAll(offset, pageSize);
-        data = dbResult[0];
-        total = dbResult[1];
+        // Cursor-based pagination
+        const result = await this.recipeRepository.findAll({ after, limit });
+        recipes = result.recipes.map((recipe) => this.mapRecipeDto(recipe));
+        meta = {
+          total: result.meta.total,
+          ...(result.meta.endCursor && { endCursor: result.meta.endCursor }),
+          ...(result.meta.hasNextPage !== undefined
+            ? { hasNextPage: result.meta.hasNextPage }
+            : {}),
+        };
       }
 
-      const recipes: RecipeDto[] = data.map((recipe) => {
-        console.log('recipeCreatedAt: ', recipe.createdAt);
-
-        const createdAt: string = utcToAsiaJakarta(recipe.createdAt);
-        console.log('cnvtredCreatedAt: ', createdAt);
-
-        const updatedAt: string = utcToAsiaJakarta(recipe.updatedAt);
-
-        console.log('ing: ', recipe.ingredients);
-
-        const ingredients = recipe.ingredients.map((ingredient) => {
-          const recipeIngredientDto: RecipeIngredientDto =
-            new RecipeIngredientDto({
-              ...ingredient,
-              createdAt: utcToAsiaJakarta(ingredient.createdAt),
-              updatedAt: utcToAsiaJakarta(ingredient.updatedAt),
-            });
-
-          return recipeIngredientDto;
-        });
-
-        const instructions = recipe.instructions.map((instruction) => {
-          const recipeInstructionDto: RecipeInstructionDto =
-            new RecipeInstructionDto({
-              ...instruction,
-              createdAt: utcToAsiaJakarta(instruction.createdAt),
-              updatedAt: utcToAsiaJakarta(instruction.updatedAt),
-            });
-
-          return recipeInstructionDto;
-        });
-
-        const image: RecipeMediaDto = new RecipeMediaDto({
-          ...recipe.image,
-          createdAt: utcToAsiaJakarta(recipe.image.createdAt),
-          updatedAt: utcToAsiaJakarta(recipe.image.updatedAt),
-        });
-
-        console.log('imageNyo: ', image);
-
-        const author: UserDto = new UserDto({
-          ...recipe.user,
-          createdAt: utcToAsiaJakarta(recipe.user.createdAt),
-          updatedAt: utcToAsiaJakarta(recipe.user.updatedAt),
-        });
-
-        const recipeDto: RecipeDto = {
-          ...recipe,
-          ingredients,
-          instructions,
-          image,
-          author,
-          createdAt,
-          updatedAt,
-        };
-
-        return recipeDto;
-      });
-
-      const metaData: MetaData = {
-        pageSize,
-        currentPage: page,
-        total,
-        totalPage: Math.ceil(total / pageSize),
-      };
-
-      const recipeList: RecipeListDataDto = new RecipeListDataDto({
-        recipes,
-        meta: metaData,
-      });
-
-      return recipeList;
+      return new RecipeListDataDto({ recipes, meta });
     } catch (error) {
-      console.log('errNih: ', error);
-
       throw new GraphQLError(error.message);
     }
+  }
+
+  private mapRecipeDto(recipe: any): RecipeDto {
+    const createdAt: string = utcToAsiaJakarta(recipe.createdAt);
+    const updatedAt: string = utcToAsiaJakarta(recipe.updatedAt);
+    const ingredients = recipe.ingredients.map(
+      (ingredient) =>
+        new RecipeIngredientDto({
+          ...ingredient,
+          createdAt: utcToAsiaJakarta(ingredient.createdAt),
+          updatedAt: utcToAsiaJakarta(ingredient.updatedAt),
+        }),
+    );
+    const instructions = recipe.instructions.map(
+      (instruction) =>
+        new RecipeInstructionDto({
+          ...instruction,
+          createdAt: utcToAsiaJakarta(instruction.createdAt),
+          updatedAt: utcToAsiaJakarta(instruction.updatedAt),
+        }),
+    );
+    const image: RecipeMediaDto = new RecipeMediaDto({
+      ...recipe.image,
+      createdAt: utcToAsiaJakarta(recipe.image.createdAt),
+      updatedAt: utcToAsiaJakarta(recipe.image.updatedAt),
+    });
+    const author: UserDto = new UserDto({
+      ...recipe.user,
+      createdAt: utcToAsiaJakarta(recipe.user.createdAt),
+      updatedAt: utcToAsiaJakarta(recipe.user.updatedAt),
+    });
+    return {
+      ...recipe,
+      ingredients,
+      instructions,
+      image,
+      author,
+      createdAt,
+      updatedAt,
+    };
   }
 
   async findOne(id: number): Promise<RecipeDto> {

@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 
 export interface SearchRequest {
   keyword: string;
-  page: number;
+  cursor?: string; // base64 encoded createdAt
   limit: number;
 }
 
@@ -50,6 +50,8 @@ export interface SearchResponse {
   recipes: {
     data: Recipe[];
     total: number;
+    endCursor?: string;
+    hasNextPage?: boolean;
   };
 }
 

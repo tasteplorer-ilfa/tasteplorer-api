@@ -8,7 +8,7 @@ service SearchService {
 
 message SearchRequest {
   string keyword = 1;
-  int32 page = 2;
+  string cursor = 2; // ⬅️ new: cursor-based pagination
   int32 limit = 3;
 }
 
@@ -19,6 +19,8 @@ message SearchResponse {
 message RecipeData {
   repeated Recipe data = 1;
   int32 total = 2;
+  string endCursor = 3; // ⬅️ cursor token
+  bool hasNextPage = 4; // ⬅️ indicator for next page
 }
 
 message Recipe {
