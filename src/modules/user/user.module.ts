@@ -8,12 +8,14 @@ import { AuthModule } from '@module/auth/auth.module';
 import { UserRepository } from './user.repository';
 import { UserFollow } from './entities/user-follow.entity';
 import { RabbitMQModule } from '@module/rabbitmq/rabbitmq.module';
+import { EngagementServiceModule } from './grpc/engagement-service.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, UserFollow]),
     AuthModule,
     RabbitMQModule,
+    EngagementServiceModule,
   ],
   providers: [UserResolver, UserService, DateScalar, UserRepository],
   exports: [UserService],

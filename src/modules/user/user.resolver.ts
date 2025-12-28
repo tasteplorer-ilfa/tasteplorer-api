@@ -1,5 +1,10 @@
 import { Resolver, Query, Mutation, Args, ID, Int } from '@nestjs/graphql';
-import { ProfileDTO, UpdateUserInput, UserDto } from './dto/user.dto';
+import {
+  ProfileDTO,
+  UpdateUserInput,
+  UserDto,
+  UserSuggestionListDto,
+} from './dto/user.dto';
 import { UserService } from './user.service';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '@module/auth/guards/jwt-auth.guard';
@@ -53,5 +58,17 @@ export class UserResolver {
   ) {
     await this.userService.unFollowUser(followerId, followingId);
     return true;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Query(() => UserSuggestionListDto, { name: 'userSuggestionList' })
+  async userSuggestionList(
+    @CurrentUser() user: TokenPayload,
+    @Args('limit', { type: () => Int, nullable: true, defaultValue: 20 })
+    limit: number,
+    @Args('offset', { type: () => Int, nullable: true, defaultValue: 0 })
+    offset: number,
+  ): Promise<UserSuggestionListDto> {
+    return this.userService.getSuggestedUsers(user.sub, limit, offset);
   }
 }

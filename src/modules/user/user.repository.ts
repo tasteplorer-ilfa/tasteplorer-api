@@ -74,8 +74,6 @@ export class UserRepository {
 
     delete result.password;
 
-    console.log('resultCurrentUser: ', result);
-
     return {
       ...result,
       followers: new UserFollowListData({

@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package engagement;
+
+service EngagementService {
+    rpc LikeRecipe (LikeRequest) returns (EngagementResponse);
+    rpc CommentRecipe (CommentRequest) returns (EngagementResponse);
+    rpc GrantPoint (PointRequest) returns (PointResponse);
+    rpc TrackEvent (EventRequest) returns (EngagementResponse);
+}
+
+service UserSuggestionService {
+    rpc GetSuggestedUsers (GetSuggestedUsersRequest) returns (GetSuggestedUsersResponse);
+    rpc GetSuggestionReason (GetSuggestionReasonRequest) returns (GetSuggestionReasonResponse);
+}
+
+message LikeRequest {
+    string userId = 1;
+    string recipeId = 2;
+}
+
+message CommentRequest {
+    string userId = 1;
+    string recipeId = 2;
+    string comment = 3;
+}
+
+message PointRequest {
+    string userId = 1;
+    int32 amount = 2;
+    string action = 3;
+}
+
+message EventRequest {
+    int32 userId = 1;
+    string eventName = 2;
+}
+
+message EngagementResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message PointResponse {
+    bool success = 1;
+    int32 totalPoints = 2;
+}
+
+message GetSuggestedUsersRequest {
+    int32 limit = 1;
+    int32 offset = 2;
+}
+
+message GetSuggestedUsersResponse {
+    repeated SuggestedUser users = 1;
+    int32 total_count = 2;
+    bool has_more = 3;
+}
+
+message SuggestedUser {
+    string user_id = 1;
+    string username = 2;
+    string full_name = 3;
+    string profile_image_url = 4;
+    int32 follower_count = 5;
+    int32 mutual_follower_count = 6;
+    repeated string mutual_connection_usernames = 7;
+    float suggestion_score = 8;
+    string suggestion_reason = 9;
+}
+
+message GetSuggestionReasonRequest {
+    string target_user_id = 1;
+}
+
+message GetSuggestionReasonResponse {
+    bool success = 1;
+    string reason = 2;
+    ReasonDetails details = 3;
+}
+
+message ReasonDetails {
+    int32 mutual_followers = 1;
+    int32 shared_following = 2;
+    repeated string connection_usernames = 3;
+}
