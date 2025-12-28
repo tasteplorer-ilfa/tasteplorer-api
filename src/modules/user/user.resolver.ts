@@ -1,5 +1,11 @@
 import { Resolver, Query, Mutation, Args, ID, Int } from '@nestjs/graphql';
-import { ProfileDTO, UpdateUserInput, UserDto } from './dto/user.dto';
+import {
+  ProfileDTO,
+  UpdateUserInput,
+  UserDto,
+  UserConnection,
+  UsersQueryInput,
+} from './dto/user.dto';
 import { UserService } from './user.service';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '@module/auth/guards/jwt-auth.guard';
@@ -53,5 +59,15 @@ export class UserResolver {
   ) {
     await this.userService.unFollowUser(followerId, followingId);
     return true;
+  }
+
+  @Query(() => UserConnection, { name: 'users' })
+  async users(@Args('input', { nullable: true }) input?: UsersQueryInput) {
+    const { search, cursor, limit } = input || {};
+    return this.userService.findUsersWithCursorPagination(
+      search,
+      cursor,
+      limit,
+    );
   }
 }

@@ -181,6 +181,7 @@ type Query {
   recipeDetail(id: Int!): RecipeDto!
   recipeList(after: String, limit: Int = 10, search: String): RecipeListDataDto!
   userProfile(id: ID!): ProfileDTO!
+  users(input: UsersQueryInput): UserConnection!
 }
 
 type RecipeDto {
@@ -340,6 +341,17 @@ input UploadParamInput {
   uploadService: EnumService!
 }
 
+type UserConnection {
+  """List of users"""
+  data: [UserDto!]!
+
+  """Whether more results exist"""
+  hasMore: Boolean!
+
+  """Cursor for next page"""
+  nextCursor: ID
+}
+
 type UserDto {
   """User Birthdate"""
   birthDate: Date!
@@ -406,4 +418,15 @@ input UserRegisterInput {
 
   """Username Field"""
   username: String!
+}
+
+input UsersQueryInput {
+  """Cursor for pagination"""
+  cursor: ID
+
+  """Number of results to return (max 50)"""
+  limit: Int = 20
+
+  """Search by username or fullname"""
+  search: String
 }

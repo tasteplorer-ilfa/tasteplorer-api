@@ -203,4 +203,58 @@ export class UserService {
     await this.userRepository.removeFollowRelationship(follow);
     return true;
   }
+
+  /**
+   * Find users with cursor-based pagination and search
+   * @param search - Search term for username or fullname
+   * @param cursor - Cursor for pagination (last user ID)
+   * @param limit - Number of results per page (default 20, max 50)
+   */
+  async findUsersWithCursorPagination(
+    search?: string,
+    cursor?: number,
+    limit: number = 20,
+  ) {
+    try {
+      // Enforce limit boundaries
+      const effectiveLimit = Math.min(Math.max(limit || 20, 1), 50);
+
+      // Fetch limit + 1 to detect if more results exist
+      const users = await this.userRepository.findUsersWithCursorPagination(
+        search,
+        cursor,
+        effectiveLimit,
+      );
+
+      // Determine if more results exist
+      const hasMore = users.length > effectiveLimit;
+
+      // Remove the extra item if it exists
+      const data = hasMore ? users.slice(0, effectiveLimit) : users;
+
+      // Extract nextCursor from the last item
+      const nextCursor =
+        hasMore && data.length > 0 ? data[data.length - 1].id : null;
+
+      // Map to DTOs with timezone conversion
+      const userDtos = data.map((user) => {
+        const createdAt = utcToAsiaJakarta(user.createdAt);
+        const updatedAt = utcToAsiaJakarta(user.updatedAt);
+
+        return new UserDto({
+          ...user,
+          createdAt,
+          updatedAt,
+        });
+      });
+
+      return {
+        data: userDtos,
+        nextCursor,
+        hasMore,
+      };
+    } catch (error) {
+      throw new GraphQLError(error.message);
+    }
+  }
 }
