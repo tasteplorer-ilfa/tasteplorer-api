@@ -102,3 +102,53 @@ export class UpdateUserInput {
   @Field(() => String, { description: 'User Image Field', nullable: true })
   image?: string;
 }
+
+@ObjectType()
+export class SuggestedUserDto {
+  constructor(entity: Partial<SuggestedUserDto>) {
+    Object.assign(this, entity);
+  }
+
+  @Field(() => String, { description: 'Suggested User ID' })
+  userId: string;
+
+  @Field(() => String, { description: 'Username' })
+  username: string;
+
+  @Field(() => String, { description: 'Full Name' })
+  fullName: string;
+
+  @Field(() => String, { description: 'Profile Image URL', nullable: true })
+  profileImageUrl?: string;
+
+  @Field(() => Int, { description: 'Follower Count' })
+  followerCount: number;
+
+  @Field(() => Int, { description: 'Mutual Follower Count' })
+  mutualFollowerCount: number;
+
+  @Field(() => [String], { description: 'Mutual Connection Usernames' })
+  mutualConnectionUsernames: string[];
+
+  @Field(() => Number, { description: 'Suggestion Score', nullable: true })
+  suggestionScore?: number;
+
+  @Field(() => String, { description: 'Suggestion Reason' })
+  suggestionReason: string;
+}
+
+@ObjectType()
+export class UserSuggestionListDto {
+  constructor(entity: Partial<UserSuggestionListDto>) {
+    Object.assign(this, entity);
+  }
+
+  @Field(() => [SuggestedUserDto], { description: 'List of suggested users' })
+  users: SuggestedUserDto[];
+
+  @Field(() => Int, { description: 'Total count of suggestions' })
+  totalCount: number;
+
+  @Field(() => Boolean, { description: 'Has more suggestions' })
+  hasMore: boolean;
+}
