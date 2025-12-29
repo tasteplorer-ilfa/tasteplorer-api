@@ -85,6 +85,41 @@ export class UserFollowListData {
   @Field(() => Int, { description: 'Total of users' })
   total: number;
 }
+
+@ObjectType()
+export class UserConnection {
+  @Field(() => [UserDto], { description: 'List of users' })
+  data: UserDto[];
+
+  @Field(() => ID, { nullable: true, description: 'Cursor for next page' })
+  nextCursor?: number;
+
+  @Field(() => Boolean, { description: 'Whether more results exist' })
+  hasMore: boolean;
+
+  @Field(() => Int, { description: 'Total number of users' })
+  total: number;
+}
+
+@InputType()
+export class UsersQueryInput {
+  @Field(() => String, {
+    nullable: true,
+    description: 'Search by username or fullname',
+  })
+  search?: string;
+
+  @Field(() => ID, { nullable: true, description: 'Cursor for pagination' })
+  cursor?: number;
+
+  @Field(() => Int, {
+    nullable: true,
+    defaultValue: 20,
+    description: 'Number of results to return (max 50)',
+  })
+  limit?: number;
+}
+
 @InputType()
 export class UpdateUserInput {
   @Field(() => String, { description: 'User Fullname Field', nullable: true })

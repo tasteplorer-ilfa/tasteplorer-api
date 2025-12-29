@@ -3,6 +3,8 @@ import {
   ProfileDTO,
   UpdateUserInput,
   UserDto,
+  UserConnection,
+  UsersQueryInput,
   UserSuggestionListDto,
 } from './dto/user.dto';
 import { UserService } from './user.service';
@@ -58,6 +60,16 @@ export class UserResolver {
   ) {
     await this.userService.unFollowUser(followerId, followingId);
     return true;
+  }
+
+  @Query(() => UserConnection, { name: 'users' })
+  async users(@Args('input', { nullable: true }) input?: UsersQueryInput) {
+    const { search, cursor, limit } = input || {};
+    return this.userService.findUsersWithCursorPagination(
+      search,
+      cursor,
+      limit,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
