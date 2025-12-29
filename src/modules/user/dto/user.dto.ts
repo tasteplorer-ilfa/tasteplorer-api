@@ -96,6 +96,9 @@ export class UserConnection {
 
   @Field(() => Boolean, { description: 'Whether more results exist' })
   hasMore: boolean;
+
+  @Field(() => Int, { description: 'Total number of users' })
+  total: number;
 }
 
 @InputType()

@@ -161,12 +161,13 @@ export class UserRepository {
    * @param search - Search term for username or fullname (case-insensitive)
    * @param cursor - Last user ID from previous page
    * @param limit - Number of results to fetch (max 50)
+   * @returns Object containing users array and total count
    */
   async findUsersWithCursorPagination(
     search?: string,
     cursor?: number,
     limit: number = 20,
-  ): Promise<User[]> {
+  ): Promise<{ users: User[]; total: number }> {
     // Enforce max limit of 50
     const effectiveLimit = Math.min(limit, 50);
 
@@ -192,6 +193,21 @@ export class UserRepository {
       );
     }
 
+    // Count total users (without cursor, but with search filter)
+    const countQueryBuilder = this.repository
+      .createQueryBuilder('users')
+      .where('users.deleted_at IS NULL');
+
+    if (search && search.trim()) {
+      countQueryBuilder.andWhere(
+        '(users.username ILIKE :search OR users.fullname ILIKE :search)',
+        { search: `%${search.trim()}%` },
+      );
+    }
+
+    // Execute count query in parallel with data query
+    const totalPromise = countQueryBuilder.getCount();
+
     // Apply cursor-based pagination
     if (cursor) {
       queryBuilder.andWhere('users.id > :cursor', { cursor });
@@ -203,6 +219,11 @@ export class UserRepository {
     // Fetch limit + 1 to detect if more results exist
     queryBuilder.limit(effectiveLimit + 1);
 
-    return queryBuilder.getMany();
+    const [users, total] = await Promise.all([
+      queryBuilder.getMany(),
+      totalPromise,
+    ]);
+
+    return { users, total };
   }
 }

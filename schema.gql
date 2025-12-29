@@ -350,6 +350,9 @@ type UserConnection {
 
   """Cursor for next page"""
   nextCursor: ID
+
+  """Total number of users"""
+  total: Int!
 }
 
 type UserDto {

@@ -219,12 +219,13 @@ export class UserService {
       // Enforce limit boundaries
       const effectiveLimit = Math.min(Math.max(limit || 20, 1), 50);
 
-      // Fetch limit + 1 to detect if more results exist
-      const users = await this.userRepository.findUsersWithCursorPagination(
-        search,
-        cursor,
-        effectiveLimit,
-      );
+      // Fetch users and total count in parallel
+      const { users, total } =
+        await this.userRepository.findUsersWithCursorPagination(
+          search,
+          cursor,
+          effectiveLimit,
+        );
 
       // Determine if more results exist
       const hasMore = users.length > effectiveLimit;
@@ -252,6 +253,7 @@ export class UserService {
         data: userDtos,
         nextCursor,
         hasMore,
+        total,
       };
     } catch (error) {
       throw new GraphQLError(error.message);
