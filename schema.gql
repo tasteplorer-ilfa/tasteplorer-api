@@ -181,6 +181,7 @@ type Query {
   recipeDetail(id: Int!): RecipeDto!
   recipeList(after: String, limit: Int = 10, search: String): RecipeListDataDto!
   userProfile(id: ID!): ProfileDTO!
+  userSuggestionList(limit: Int = 20, offset: Int = 0): UserSuggestionListDto!
   users(input: UsersQueryInput): UserConnection!
 }
 
@@ -316,6 +317,35 @@ type RecipeMediaDto {
   url: String!
 }
 
+type SuggestedUserDto {
+  """Follower Count"""
+  followerCount: Int!
+
+  """Full Name"""
+  fullName: String!
+
+  """Mutual Connection Usernames"""
+  mutualConnectionUsernames: [String!]!
+
+  """Mutual Follower Count"""
+  mutualFollowerCount: Int!
+
+  """Profile Image URL"""
+  profileImageUrl: String
+
+  """Suggestion Reason"""
+  suggestionReason: String!
+
+  """Suggestion Score"""
+  suggestionScore: Float
+
+  """Suggested User ID"""
+  userId: String!
+
+  """Username"""
+  username: String!
+}
+
 input UpdateUserInput {
   """User BirthDate Field"""
   birthDate: String!
@@ -421,6 +451,17 @@ input UserRegisterInput {
 
   """Username Field"""
   username: String!
+}
+
+type UserSuggestionListDto {
+  """Has more suggestions"""
+  hasMore: Boolean!
+
+  """Total count of suggestions"""
+  totalCount: Int!
+
+  """List of suggested users"""
+  users: [SuggestedUserDto!]!
 }
 
 input UsersQueryInput {

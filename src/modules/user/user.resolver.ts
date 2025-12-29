@@ -5,6 +5,7 @@ import {
   UserDto,
   UserConnection,
   UsersQueryInput,
+  UserSuggestionListDto,
 } from './dto/user.dto';
 import { UserService } from './user.service';
 import { UseGuards } from '@nestjs/common';
@@ -69,5 +70,17 @@ export class UserResolver {
       cursor,
       limit,
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Query(() => UserSuggestionListDto, { name: 'userSuggestionList' })
+  async userSuggestionList(
+    @CurrentUser() user: TokenPayload,
+    @Args('limit', { type: () => Int, nullable: true, defaultValue: 20 })
+    limit: number,
+    @Args('offset', { type: () => Int, nullable: true, defaultValue: 0 })
+    offset: number,
+  ): Promise<UserSuggestionListDto> {
+    return this.userService.getSuggestedUsers(user.sub, limit, offset);
   }
 }

@@ -4,11 +4,18 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { User } from './entities/user.entity';
 import { UserRegisterInput } from 'src/modules/auth/dto/auth.dto';
 import { GraphQLError } from 'graphql';
-import { ProfileDTO, UpdateUserInput, UserDto } from './dto/user.dto';
+import {
+  ProfileDTO,
+  SuggestedUserDto,
+  UpdateUserInput,
+  UserDto,
+  UserSuggestionListDto,
+} from './dto/user.dto';
 import {
   hashingPassword,
   validateEmail,
@@ -18,14 +25,31 @@ import { utcToAsiaJakarta } from '@common/utils/timezone-converter';
 import { UserRepository } from './user.repository';
 import { UserInputError } from '@nestjs/apollo';
 import { UserFollow } from './entities/user-follow.entity';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientGrpc, ClientProxy } from '@nestjs/microservices';
+import {
+  GetSuggestedUsersRequest,
+  UserSuggestionService,
+} from './grpc/engagement.interface';
+import { firstValueFrom } from 'rxjs';
+import { Metadata } from '@grpc/grpc-js';
 
 @Injectable()
-export class UserService {
+export class UserService implements OnModuleInit {
+  private userSuggestionService: UserSuggestionService;
+
   constructor(
     private userRepository: UserRepository,
     @Inject('RABBITMQ_SERVICE') private readonly rabbitMQClient: ClientProxy,
+    @Inject('ENGAGEMENT_SERVICE')
+    private readonly engagementClient: ClientGrpc,
   ) {}
+
+  onModuleInit() {
+    this.userSuggestionService =
+      this.engagementClient.getService<UserSuggestionService>(
+        'UserSuggestionService',
+      );
+  }
 
   async create(userRegisterInput: UserRegisterInput): Promise<UserDto> {
     try {
@@ -182,8 +206,6 @@ export class UserService {
       message: `error User ${followerId} followed user ${followingId}`,
     });
 
-    console.log('success publish message rabbitmq yuhuu');
-
     return this.userRepository.createUserFollow(followerId, followingId);
   }
 
@@ -257,6 +279,98 @@ export class UserService {
       };
     } catch (error) {
       throw new GraphQLError(error.message);
+    }
+  }
+
+  async getSuggestedUsers(
+    userId: number,
+    limit: number = 20,
+    offset: number = 0,
+  ): Promise<UserSuggestionListDto> {
+    try {
+      // Validate limit
+      if (limit > 100) {
+        throw new BadRequestException('Limit cannot exceed 100');
+      }
+
+      const request: GetSuggestedUsersRequest = {
+        limit,
+        offset,
+      };
+
+      // Create metadata with user-id
+      const metadata = new Metadata();
+      metadata.set('user-id', userId.toString());
+
+      console.log('🔍 Sending gRPC request with metadata:', {
+        userId,
+        limit,
+        offset,
+        metadataMap: metadata.getMap(),
+      });
+
+      // Call gRPC service with metadata directly as second parameter
+      const response = await firstValueFrom(
+        this.userSuggestionService.getSuggestedUsers(request, metadata),
+      );
+
+      console.log('✅ Received gRPC response:', {
+        usersCount: response?.users?.length,
+        totalCount: response?.total_count,
+        hasMore: response?.has_more,
+      });
+
+      if (!response || !response.users) {
+        return new UserSuggestionListDto({
+          users: [],
+          totalCount: 0,
+          hasMore: false,
+        });
+      }
+
+      // Map gRPC response to DTO
+      const users = response.users.map(
+        (user) =>
+          new SuggestedUserDto({
+            userId: user.user_id,
+            username: user.username,
+            fullName: user.full_name,
+            profileImageUrl: user.profile_image_url || null,
+            followerCount: user.follower_count,
+            mutualFollowerCount: user.mutual_follower_count,
+            mutualConnectionUsernames: user.mutual_connection_usernames,
+            suggestionScore: user.suggestion_score,
+            suggestionReason: user.suggestion_reason,
+          }),
+      );
+
+      return new UserSuggestionListDto({
+        users,
+        totalCount: response.total_count,
+        hasMore: response.has_more,
+      });
+    } catch (error) {
+      console.error('❌ gRPC Error Details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      });
+
+      // Handle gRPC errors gracefully
+      if (error.code === 'UNAVAILABLE' || error.code === 14) {
+        throw new GraphQLError(
+          'User suggestion service is currently unavailable',
+        );
+      }
+      if (error.code === 'UNAUTHENTICATED' || error.code === 16) {
+        throw new GraphQLError(
+          'Failed to authenticate with user suggestion service: ' +
+            error.message,
+        );
+      }
+      throw new GraphQLError(
+        error.message || 'Failed to fetch user suggestions',
+      );
     }
   }
 }
