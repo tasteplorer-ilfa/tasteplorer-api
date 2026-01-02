@@ -177,7 +177,7 @@ type Query {
   bannerList(page: Int!, pageSize: Int!): BannerListDto!
   currentUser: ProfileDTO!
   myRecipeDetail(id: Int!): RecipeDto!
-  myRecipeList(page: Int!, pageSize: Int!): RecipeListDataDto!
+  myRecipeList(after: String, limit: Int = 10, search: String): RecipeListDataDto!
   recipeDetail(id: Int!): RecipeDto!
   recipeList(after: String, limit: Int = 10, search: String): RecipeListDataDto!
   userProfile(id: ID!): ProfileDTO!

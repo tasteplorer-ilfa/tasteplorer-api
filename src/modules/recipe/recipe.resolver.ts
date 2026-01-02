@@ -66,11 +66,13 @@ export class RecipeResolver {
   @UseGuards(JwtAuthGuard)
   @Query(() => RecipeListDataDto, { name: 'myRecipeList' })
   async myRecipeList(
-    @Args('page', { type: () => Int }) page: number,
-    @Args('pageSize', { type: () => Int }) pageSize: number,
+    @Args('after', { type: () => String, nullable: true }) after: string,
+    @Args('limit', { type: () => Int, nullable: true, defaultValue: 10 })
+    limit: number,
+    @Args('search', { type: () => String, nullable: true }) search: string,
     @CurrentUser() user: TokenPayload,
   ): Promise<RecipeListDataDto> {
-    return this.recipeService.findAllMyRecipes(page, pageSize, user.sub);
+    return this.recipeService.findAllMyRecipes(user.sub, after, limit, search);
   }
 
   @Query(() => RecipeDto, { name: 'myRecipeDetail' })
