@@ -181,7 +181,12 @@ export class RecipeRepository implements OnModuleInit {
       .getOne();
   }
 
-  async findAllMyRecipes(userId: number, after?: string, limit: number = 25) {
+  async findAllMyRecipes(
+    userId: number,
+    after?: string,
+    limit: number = 25,
+    search?: string,
+  ) {
     // Query builder untuk data (pakai after/cursor)
     const qb = this.repository
       .createQueryBuilder('recipes')
@@ -200,6 +205,10 @@ export class RecipeRepository implements OnModuleInit {
       .where('recipes.deleted_at IS NULL')
       .andWhere('recipes.userId = :userId', { userId });
 
+    if (search) {
+      qb.andWhere('recipes.title ILIKE :search', { search: `%${search}%` });
+    }
+
     if (after) {
       const afterDate = decodeCursor(after);
       qb.andWhere('recipes.createdAt < :after', { after: afterDate });
@@ -211,6 +220,12 @@ export class RecipeRepository implements OnModuleInit {
       .createQueryBuilder('recipes')
       .where('recipes.deleted_at IS NULL')
       .andWhere('recipes.userId = :userId', { userId });
+
+    if (search) {
+      countQb.andWhere('recipes.title ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
 
     const [total, recipes] = await Promise.all([
       countQb.getCount(),

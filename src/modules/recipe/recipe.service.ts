@@ -176,6 +176,7 @@ export class RecipeService {
     userId: number,
     after?: string,
     limit: number = 25,
+    search?: string,
   ): Promise<RecipeListDataDto> {
     try {
       // Cursor-based pagination
@@ -183,6 +184,7 @@ export class RecipeService {
         userId,
         after,
         limit,
+        search,
       );
 
       const recipes: RecipeDto[] = result.recipes.map((recipe) => {

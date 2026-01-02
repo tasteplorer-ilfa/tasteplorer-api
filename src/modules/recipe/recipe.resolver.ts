@@ -69,9 +69,10 @@ export class RecipeResolver {
     @Args('after', { type: () => String, nullable: true }) after: string,
     @Args('limit', { type: () => Int, nullable: true, defaultValue: 10 })
     limit: number,
+    @Args('search', { type: () => String, nullable: true }) search: string,
     @CurrentUser() user: TokenPayload,
   ): Promise<RecipeListDataDto> {
-    return this.recipeService.findAllMyRecipes(user.sub, after, limit);
+    return this.recipeService.findAllMyRecipes(user.sub, after, limit, search);
   }
 
   @Query(() => RecipeDto, { name: 'myRecipeDetail' })
