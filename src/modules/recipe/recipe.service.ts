@@ -1,4 +1,3 @@
-import { maxPageValidation, setPage } from '@common/utils/maxPageValidation';
 import { Injectable } from '@nestjs/common';
 import { GraphQLError } from 'graphql';
 import { EntityManager } from 'typeorm';
@@ -174,21 +173,19 @@ export class RecipeService {
   }
 
   async findAllMyRecipes(
-    page: number,
-    pageSize: number,
     userId: number,
+    after?: string,
+    limit: number = 25,
   ): Promise<RecipeListDataDto> {
-    maxPageValidation(pageSize);
-    const offset = setPage(page, pageSize);
-
     try {
-      const [data, total] = await this.recipeRepository.findAllMyRecipes(
-        offset,
-        pageSize,
+      // Cursor-based pagination
+      const result = await this.recipeRepository.findAllMyRecipes(
         userId,
+        after,
+        limit,
       );
 
-      const recipes: RecipeDto[] = data.map((recipe) => {
+      const recipes: RecipeDto[] = result.recipes.map((recipe) => {
         const createdAt: string = utcToAsiaJakarta(recipe.createdAt);
         const updatedAt: string = utcToAsiaJakarta(recipe.updatedAt);
 
@@ -240,10 +237,11 @@ export class RecipeService {
       });
 
       const metaData: MetaData = {
-        pageSize,
-        currentPage: page,
-        total,
-        totalPage: Math.ceil(total / pageSize),
+        total: result.meta.total,
+        ...(result.meta.endCursor && { endCursor: result.meta.endCursor }),
+        ...(result.meta.hasNextPage !== undefined
+          ? { hasNextPage: result.meta.hasNextPage }
+          : {}),
       };
 
       const recipeList: RecipeListDataDto = new RecipeListDataDto({

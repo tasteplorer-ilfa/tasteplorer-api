@@ -181,8 +181,9 @@ export class RecipeRepository implements OnModuleInit {
       .getOne();
   }
 
-  async findAllMyRecipes(offset: number, limit: number, userId: number) {
-    return this.repository
+  async findAllMyRecipes(userId: number, after?: string, limit: number = 25) {
+    // Query builder untuk data (pakai after/cursor)
+    const qb = this.repository
       .createQueryBuilder('recipes')
       .innerJoinAndSelect(
         'recipes.ingredients',
@@ -197,11 +198,44 @@ export class RecipeRepository implements OnModuleInit {
       .innerJoinAndSelect('recipes.image', 'image', 'image.deleted_at IS NULL')
       .innerJoinAndSelect('recipes.user', 'user')
       .where('recipes.deleted_at IS NULL')
-      .andWhere('recipes.userId = :userId', { userId })
-      .orderBy('recipes.createdAt', 'DESC')
-      .skip(offset)
-      .take(limit)
-      .getManyAndCount();
+      .andWhere('recipes.userId = :userId', { userId });
+
+    if (after) {
+      const afterDate = decodeCursor(after);
+      qb.andWhere('recipes.createdAt < :after', { after: afterDate });
+    }
+    qb.orderBy('recipes.createdAt', 'DESC').take(limit + 1);
+
+    // Query builder untuk count (hanya filter global dan userId, TANPA after/cursor)
+    const countQb = this.repository
+      .createQueryBuilder('recipes')
+      .where('recipes.deleted_at IS NULL')
+      .andWhere('recipes.userId = :userId', { userId });
+
+    const [total, recipes] = await Promise.all([
+      countQb.getCount(),
+      qb.getMany(),
+    ]);
+
+    const hasNextPage = recipes.length > limit;
+    const nodes = recipes.slice(0, limit);
+    const endCursor =
+      nodes.length > 0
+        ? encodeCursor(nodes[nodes.length - 1].createdAt)
+        : undefined;
+    const totalPage = Math.ceil(total / limit);
+
+    return {
+      recipes: nodes,
+      meta: {
+        total,
+        totalPage,
+        pageSize: limit,
+        currentPage: 0,
+        ...(endCursor && { endCursor }),
+        ...(hasNextPage ? { hasNextPage } : {}),
+      },
+    };
   }
 
   async findOneMyRecipe(id: number, userId: number) {
