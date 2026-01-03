@@ -181,6 +181,7 @@ type Query {
   recipeDetail(id: Int!): RecipeDto!
   recipeList(after: String, limit: Int = 10, search: String): RecipeListDataDto!
   userProfile(id: ID!): ProfileDTO!
+  userRecipeList(after: String, limit: Int = 10, search: String, userId: Int!): RecipeListDataDto!
   userSuggestionList(limit: Int = 20, offset: Int = 0): UserSuggestionListDto!
   users(input: UsersQueryInput): UserConnection!
 }

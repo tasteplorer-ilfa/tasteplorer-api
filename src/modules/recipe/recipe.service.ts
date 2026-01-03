@@ -257,6 +257,91 @@ export class RecipeService {
     }
   }
 
+  async findAllUserRecipes(
+    userId: number,
+    after?: string,
+    limit: number = 25,
+    search?: string,
+  ): Promise<RecipeListDataDto> {
+    try {
+      // Cursor-based pagination
+      const result = await this.recipeRepository.findAllUserRecipes(
+        userId,
+        after,
+        limit,
+        search,
+      );
+
+      const recipes: RecipeDto[] = result.recipes.map((recipe) => {
+        const createdAt: string = utcToAsiaJakarta(recipe.createdAt);
+        const updatedAt: string = utcToAsiaJakarta(recipe.updatedAt);
+
+        const ingredients = recipe.ingredients.map((ingredient) => {
+          const recipeIngredientDto: RecipeIngredientDto =
+            new RecipeIngredientDto({
+              ...ingredient,
+              createdAt: utcToAsiaJakarta(ingredient.createdAt),
+              updatedAt: utcToAsiaJakarta(ingredient.updatedAt),
+            });
+
+          return recipeIngredientDto;
+        });
+
+        const instructions = recipe.instructions.map((instruction) => {
+          const recipeInstructionDto: RecipeInstructionDto =
+            new RecipeInstructionDto({
+              ...instruction,
+              createdAt: utcToAsiaJakarta(instruction.createdAt),
+              updatedAt: utcToAsiaJakarta(instruction.updatedAt),
+            });
+
+          return recipeInstructionDto;
+        });
+
+        const image: RecipeMediaDto = new RecipeMediaDto({
+          ...recipe.image,
+          createdAt: utcToAsiaJakarta(recipe.image.createdAt),
+          updatedAt: utcToAsiaJakarta(recipe.image.updatedAt),
+        });
+
+        const author: UserDto = new UserDto({
+          ...recipe.user,
+          createdAt: utcToAsiaJakarta(recipe.user.createdAt),
+          updatedAt: utcToAsiaJakarta(recipe.user.updatedAt),
+        });
+
+        const recipeDto: RecipeDto = {
+          ...recipe,
+          ingredients,
+          instructions,
+          image,
+          author,
+          createdAt,
+          updatedAt,
+        };
+
+        return recipeDto;
+      });
+
+      const metaData: MetaData = {
+        total: result.meta.total,
+        ...(result.meta.endCursor && { endCursor: result.meta.endCursor }),
+        ...(result.meta.hasNextPage !== undefined
+          ? { hasNextPage: result.meta.hasNextPage }
+          : {}),
+      };
+
+      const recipeList: RecipeListDataDto = new RecipeListDataDto({
+        recipes,
+        meta: metaData,
+      });
+
+      return recipeList;
+    } catch (error) {
+      throw new GraphQLError(error.message);
+    }
+  }
+
   async findOneMyRecipe(id: number, userId: number): Promise<RecipeDto> {
     try {
       const recipe = await this.recipeRepository.findOneMyRecipe(id, userId);
