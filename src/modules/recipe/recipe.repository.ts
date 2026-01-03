@@ -253,6 +253,78 @@ export class RecipeRepository implements OnModuleInit {
     };
   }
 
+  async findAllUserRecipes(
+    userId: number,
+    after?: string,
+    limit: number = 25,
+    search?: string,
+  ) {
+    // Query builder untuk data (pakai after/cursor)
+    const qb = this.repository
+      .createQueryBuilder('recipes')
+      .innerJoinAndSelect(
+        'recipes.ingredients',
+        'ingredients',
+        'ingredients.deleted_at IS NULL',
+      )
+      .innerJoinAndSelect(
+        'recipes.instructions',
+        'instructions',
+        'instructions.deleted_at IS NULL',
+      )
+      .innerJoinAndSelect('recipes.image', 'image', 'image.deleted_at IS NULL')
+      .innerJoinAndSelect('recipes.user', 'user')
+      .where('recipes.deleted_at IS NULL')
+      .andWhere('recipes.userId = :userId', { userId });
+
+    if (search) {
+      qb.andWhere('recipes.title ILIKE :search', { search: `%${search}%` });
+    }
+
+    if (after) {
+      const afterDate = decodeCursor(after);
+      qb.andWhere('recipes.createdAt < :after', { after: afterDate });
+    }
+    qb.orderBy('recipes.createdAt', 'DESC').take(limit + 1);
+
+    // Query builder untuk count (hanya filter global dan userId, TANPA after/cursor)
+    const countQb = this.repository
+      .createQueryBuilder('recipes')
+      .where('recipes.deleted_at IS NULL')
+      .andWhere('recipes.userId = :userId', { userId });
+
+    if (search) {
+      countQb.andWhere('recipes.title ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
+    const [total, recipes] = await Promise.all([
+      countQb.getCount(),
+      qb.getMany(),
+    ]);
+
+    const hasNextPage = recipes.length > limit;
+    const nodes = recipes.slice(0, limit);
+    const endCursor =
+      nodes.length > 0
+        ? encodeCursor(nodes[nodes.length - 1].createdAt)
+        : undefined;
+    const totalPage = Math.ceil(total / limit);
+
+    return {
+      recipes: nodes,
+      meta: {
+        total,
+        totalPage,
+        pageSize: limit,
+        currentPage: 0,
+        ...(endCursor && { endCursor }),
+        ...(hasNextPage ? { hasNextPage } : {}),
+      },
+    };
+  }
+
   async findOneMyRecipe(id: number, userId: number) {
     return this.repository
       .createQueryBuilder('recipes')

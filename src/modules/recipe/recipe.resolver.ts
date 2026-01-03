@@ -75,6 +75,17 @@ export class RecipeResolver {
     return this.recipeService.findAllMyRecipes(user.sub, after, limit, search);
   }
 
+  @Query(() => RecipeListDataDto, { name: 'userRecipeList' })
+  async userRecipeList(
+    @Args('userId', { type: () => Int }) userId: number,
+    @Args('after', { type: () => String, nullable: true }) after: string,
+    @Args('limit', { type: () => Int, nullable: true, defaultValue: 10 })
+    limit: number,
+    @Args('search', { type: () => String, nullable: true }) search: string,
+  ): Promise<RecipeListDataDto> {
+    return this.recipeService.findAllUserRecipes(userId, after, limit, search);
+  }
+
   @Query(() => RecipeDto, { name: 'myRecipeDetail' })
   @UseGuards(JwtAuthGuard)
   async myRecipeDetail(
