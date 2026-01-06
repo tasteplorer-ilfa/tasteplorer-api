@@ -13,6 +13,7 @@ import { ArticleModule } from '@module/article/article.module';
 import { BannerModule } from '@module/banner/banner.module';
 import { RecipeModule } from '@module/recipe/recipe.module';
 import { UploadFileModule } from '@module/upload-file/upload-file.module';
+import { FeedModule } from '@module/feed/feed.module';
 import { CustomLoggerService } from '@log/logger.service';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { GraphqlLoggingInterceptor } from '@log/graphql-logging.interceptor';
@@ -45,6 +46,7 @@ import { RabbitMQModule } from '@module/rabbitmq/rabbitmq.module';
     ArticleModule,
     RecipeModule,
     UploadFileModule,
+    FeedModule,
     RabbitMQModule,
   ],
   controllers: [AppController],
