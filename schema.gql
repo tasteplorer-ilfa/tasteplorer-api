@@ -77,8 +77,19 @@ type CloudinaryResponseDto {
   isSuccess: Boolean!
 }
 
+input CreateFeedInput {
+  content: String!
+  images: [FeedImageInput!] = []
+  recipeId: Int = 0
+}
+
 """Date custom scalar type"""
 scalar Date
+
+type DeleteFeedResponseDto {
+  message: String!
+  success: Boolean!
+}
 
 """Folders in Cloudinary where images can be uploaded"""
 enum EnumFolder {
@@ -93,6 +104,33 @@ enum EnumService {
   Cloudinary
   S3Storage
   Web3Storage
+}
+
+type FeedDto {
+  content: String!
+  createdAt: String!
+  id: ID!
+  images: [FeedImageDto!]!
+  recipeId: Int
+  updatedAt: String!
+  userId: Int!
+}
+
+type FeedImageDto {
+  id: ID!
+  imageUrl: String!
+  position: Int!
+}
+
+input FeedImageInput {
+  imageUrl: String!
+  position: Int!
+}
+
+type FeedListDto {
+  feeds: [FeedDto!]!
+  hasMore: Boolean!
+  nextCursor: String
 }
 
 input LoginInput {
@@ -124,12 +162,15 @@ type MetaData {
 }
 
 type Mutation {
+  createFeed(input: CreateFeedInput!): FeedDto!
   createRecipe(input: RecipeInput!): RecipeDto!
+  deleteFeed(id: ID!): DeleteFeedResponseDto!
   followUser(followerId: Int!, followingId: Int!): Boolean!
   login(input: LoginInput!): AuthPayload!
   register(input: UserRegisterInput!): AuthPayload!
   removeRecipe(id: Int!): String!
   unfollowUser(followerId: Int!, followingId: Int!): Boolean!
+  updateFeed(id: ID!, input: UpdateFeedInput!): FeedDto!
   updateRecipe(id: ID!, input: RecipeInput!): RecipeDto!
   updateUser(id: ID!, input: UpdateUserInput!): UserDto!
   uploadSingleFile(file: Upload!, setting: UploadParamInput!): CloudinaryResponseDto!
@@ -176,10 +217,13 @@ type Query {
   bannerDetail(id: Int!): BannerDto!
   bannerList(page: Int!, pageSize: Int!): BannerListDto!
   currentUser: ProfileDTO!
+  feed(id: ID!): FeedDto!
+  homeFeeds(cursor: String, limit: Int = 20): FeedListDto!
   myRecipeDetail(id: Int!): RecipeDto!
   myRecipeList(after: String, limit: Int = 10, search: String): RecipeListDataDto!
   recipeDetail(id: Int!): RecipeDto!
   recipeList(after: String, limit: Int = 10, search: String): RecipeListDataDto!
+  userFeeds(cursor: String, limit: Int = 20, userId: Int!): FeedListDto!
   userProfile(id: ID!): ProfileDTO!
   userRecipeList(after: String, limit: Int = 10, search: String, userId: Int!): RecipeListDataDto!
   userSuggestionList(limit: Int = 20, offset: Int = 0): UserSuggestionListDto!
@@ -345,6 +389,10 @@ type SuggestedUserDto {
 
   """Username"""
   username: String!
+}
+
+input UpdateFeedInput {
+  content: String!
 }
 
 input UpdateUserInput {

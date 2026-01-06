@@ -14,6 +14,15 @@ service UserSuggestionService {
     rpc GetSuggestionReason (GetSuggestionReasonRequest) returns (GetSuggestionReasonResponse);
 }
 
+service FeedService {
+    rpc CreateFeed (CreateFeedRequest) returns (CreateFeedResponse);
+    rpc GetFeed (GetFeedRequest) returns (GetFeedResponse);
+    rpc UpdateFeed (UpdateFeedRequest) returns (UpdateFeedResponse);
+    rpc DeleteFeed (DeleteFeedRequest) returns (DeleteFeedResponse);
+    rpc ListHomeFeed (ListHomeFeedRequest) returns (ListHomeFeedResponse);
+    rpc ListUserFeeds (ListUserFeedsRequest) returns (ListUserFeedsResponse);
+}
+
 message LikeRequest {
     string userId = 1;
     string recipeId = 2;
@@ -83,4 +92,98 @@ message ReasonDetails {
     int32 mutual_followers = 1;
     int32 shared_following = 2;
     repeated string connection_usernames = 3;
+}
+
+// ============================================================================
+// Feed Messages
+// ============================================================================
+
+message CreateFeedRequest {
+    // Note: user_id comes from authenticated context (JWT metadata)
+    string content = 1;
+    int32 recipe_id = 2;  // Optional: 0 means no recipe link
+    repeated FeedImageInput images = 3;
+}
+
+message FeedImageInput {
+    string image_url = 1;
+    int32 position = 2;
+}
+
+message CreateFeedResponse {
+    bool success = 1;
+    string message = 2;
+    Feed feed = 3;
+}
+
+message GetFeedRequest {
+    string feed_id = 1;  // UUID string
+}
+
+message GetFeedResponse {
+    bool success = 1;
+    string message = 2;
+    Feed feed = 3;
+}
+
+message UpdateFeedRequest {
+    string feed_id = 1;  // UUID string
+    string content = 2;
+}
+
+message UpdateFeedResponse {
+    bool success = 1;
+    string message = 2;
+    Feed feed = 3;
+}
+
+message DeleteFeedRequest {
+    string feed_id = 1;  // UUID string
+}
+
+message DeleteFeedResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message ListHomeFeedRequest {
+    // Note: user_id comes from authenticated context (JWT)
+    string cursor = 1;  // Opaque cursor (Base64 encoded)
+    int32 limit = 2;    // Max 100, default 20
+}
+
+message ListHomeFeedResponse {
+    bool success = 1;
+    repeated Feed feeds = 2;
+    string next_cursor = 3;  // Empty if no more pages
+    bool has_more = 4;
+}
+
+message ListUserFeedsRequest {
+    int32 target_user_id = 1;  // User whose feeds to retrieve
+    string cursor = 2;
+    int32 limit = 3;
+}
+
+message ListUserFeedsResponse {
+    bool success = 1;
+    repeated Feed feeds = 2;
+    string next_cursor = 3;
+    bool has_more = 4;
+}
+
+message Feed {
+    string id = 1;  // UUID string
+    int32 user_id = 2;
+    int32 recipe_id = 3;  // 0 if no recipe linked
+    string content = 4;
+    string created_at = 5;  // RFC3339 format
+    string updated_at = 6;  // RFC3339 format
+    repeated FeedImage images = 7;
+}
+
+message FeedImage {
+    string id = 1;  // UUID string
+    string image_url = 2;
+    int32 position = 3;
 }
