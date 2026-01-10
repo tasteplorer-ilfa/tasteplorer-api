@@ -113,7 +113,7 @@ type FeedDto {
   images: [FeedImageDto!]!
   recipeId: Int
   updatedAt: String!
-  userId: Int!
+  user: FeedUserDto!
 }
 
 type FeedImageDto {
@@ -131,6 +131,12 @@ type FeedListDto {
   feeds: [FeedDto!]!
   hasMore: Boolean!
   nextCursor: String
+}
+
+type FeedUserDto {
+  id: Int!
+  profileImageUrl: String!
+  username: String!
 }
 
 input LoginInput {

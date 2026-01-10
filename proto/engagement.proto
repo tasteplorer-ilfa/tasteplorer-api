@@ -172,9 +172,16 @@ message ListUserFeedsResponse {
     bool has_more = 4;
 }
 
+// Feed user information
+message FeedUser {
+    int32 id = 1;
+    string username = 2;
+    string profile_image_url = 3;
+}
+
 message Feed {
     string id = 1;  // UUID string
-    int32 user_id = 2;
+    FeedUser user = 2;  // Changed from user_id to user object
     int32 recipe_id = 3;  // 0 if no recipe linked
     string content = 4;
     string created_at = 5;  // RFC3339 format

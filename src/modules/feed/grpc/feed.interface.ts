@@ -76,9 +76,15 @@ export interface ListUserFeedsResponse {
 }
 
 // Entity interfaces
+export interface FeedUser {
+  id: number;
+  username: string;
+  profile_image_url: string;
+}
+
 export interface Feed {
   id: string;
-  user_id: number;
+  user: FeedUser;
   recipe_id: number;
   content: string;
   created_at: string;

@@ -17,6 +17,7 @@ import {
   UpdateFeedInput,
   FeedListDto,
   DeleteFeedResponseDto,
+  FeedUserDto,
 } from './dto/feed.dto';
 
 @Injectable()
@@ -41,12 +42,20 @@ export class FeedService implements OnModuleInit {
   private mapFeedDto(feed: any): FeedDto {
     return {
       id: feed.id,
-      userId: feed.user_id,
+      user: this.mapFeedUserDto(feed.user),
       recipeId: feed.recipe_id === 0 ? null : feed.recipe_id,
       content: feed.content,
       createdAt: feed.created_at,
       updatedAt: feed.updated_at,
       images: feed.images.map((img: any) => this.mapFeedImageDto(img)),
+    };
+  }
+
+  private mapFeedUserDto(user: any): FeedUserDto {
+    return {
+      id: user.id,
+      username: user.username,
+      profileImageUrl: user.profile_image_url,
     };
   }
 

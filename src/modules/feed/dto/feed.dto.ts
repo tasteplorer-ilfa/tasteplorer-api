@@ -1,6 +1,18 @@
 import { ObjectType, Field, Int, ID, InputType } from '@nestjs/graphql';
 
 @ObjectType()
+export class FeedUserDto {
+  @Field(() => Int)
+  id: number;
+
+  @Field()
+  username: string;
+
+  @Field()
+  profileImageUrl: string;
+}
+
+@ObjectType()
 export class FeedImageDto {
   @Field(() => ID)
   id: string;
@@ -17,8 +29,8 @@ export class FeedDto {
   @Field(() => ID)
   id: string;
 
-  @Field(() => Int)
-  userId: number;
+  @Field(() => FeedUserDto)
+  user: FeedUserDto;
 
   @Field(() => Int, { nullable: true })
   recipeId?: number;
