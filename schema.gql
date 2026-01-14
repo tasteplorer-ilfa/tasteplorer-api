@@ -95,6 +95,7 @@ type DeleteFeedResponseDto {
 enum EnumFolder {
   ARTICLE
   BANNER
+  FEED
   RECIPE
   USER
 }
