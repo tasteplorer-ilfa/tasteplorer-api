@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package engagement;
 
+// Ini baris penting untuk Go:
+option go_package = "engagement-pb/pb;pb";
+
 service EngagementService {
     rpc LikeRecipe (LikeRequest) returns (EngagementResponse);
     rpc CommentRecipe (CommentRequest) returns (EngagementResponse);
@@ -129,6 +132,9 @@ message GetFeedResponse {
 message UpdateFeedRequest {
     string feed_id = 1;  // UUID string
     string content = 2;
+    int32 recipe_id = 3;  // Optional: 0 means no recipe link
+    repeated FeedImageInput images = 4;
+    
 }
 
 message UpdateFeedResponse {
@@ -179,10 +185,16 @@ message FeedUser {
     string profile_image_url = 3;
 }
 
+// Feed recipe information
+message FeedRecipe {
+    int32 id = 1;
+    string title = 2;
+}
+
 message Feed {
     string id = 1;  // UUID string
     FeedUser user = 2;  // Changed from user_id to user object
-    int32 recipe_id = 3;  // 0 if no recipe linked
+    FeedRecipe recipe = 3;  // Changed from int32 recipe_id to FeedRecipe object (nullable)
     string content = 4;
     string created_at = 5;  // RFC3339 format
     string updated_at = 6;  // RFC3339 format

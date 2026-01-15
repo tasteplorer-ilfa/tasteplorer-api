@@ -13,6 +13,15 @@ export class FeedUserDto {
 }
 
 @ObjectType()
+export class FeedRecipeDto {
+  @Field(() => Int)
+  id: number;
+
+  @Field()
+  title: string;
+}
+
+@ObjectType()
 export class FeedImageDto {
   @Field(() => ID)
   id: string;
@@ -32,8 +41,8 @@ export class FeedDto {
   @Field(() => FeedUserDto)
   user: FeedUserDto;
 
-  @Field(() => Int, { nullable: true })
-  recipeId?: number;
+  @Field(() => FeedRecipeDto, { nullable: true })
+  recipe?: FeedRecipeDto;
 
   @Field()
   content: string;
@@ -73,6 +82,12 @@ export class CreateFeedInput {
 export class UpdateFeedInput {
   @Field()
   content: string;
+
+  @Field(() => Int, { nullable: true, defaultValue: 0 })
+  recipeId?: number;
+
+  @Field(() => [FeedImageInput], { nullable: true, defaultValue: [] })
+  images?: FeedImageInput[];
 }
 
 @ObjectType()

@@ -18,6 +18,7 @@ import {
   FeedListDto,
   DeleteFeedResponseDto,
   FeedUserDto,
+  FeedRecipeDto,
 } from './dto/feed.dto';
 
 @Injectable()
@@ -43,7 +44,7 @@ export class FeedService implements OnModuleInit {
     return {
       id: feed.id,
       user: this.mapFeedUserDto(feed.user),
-      recipeId: feed.recipe_id === 0 ? null : feed.recipe_id,
+      recipe: feed.recipe?.id ? this.mapFeedRecipeDto(feed.recipe) : null,
       content: feed.content,
       createdAt: feed.created_at,
       updatedAt: feed.updated_at,
@@ -56,6 +57,13 @@ export class FeedService implements OnModuleInit {
       id: user.id,
       username: user.username,
       profileImageUrl: user.profile_image_url,
+    };
+  }
+
+  private mapFeedRecipeDto(recipe: any): FeedRecipeDto {
+    return {
+      id: recipe.id,
+      title: recipe.title,
     };
   }
 
@@ -123,12 +131,25 @@ export class FeedService implements OnModuleInit {
       const request: UpdateFeedRequest = {
         feed_id: feedId,
         content: input.content,
+        recipe_id: input.recipeId || 0,
+        images:
+          input.images?.map((img) => ({
+            image_url: img.imageUrl,
+            position: img.position,
+          })) || [],
       };
+
+      // Debug logging
+      console.log('UpdateFeed Request:', JSON.stringify(request, null, 2));
+      console.log('Input recipeId:', input.recipeId);
+      console.log('Input images count:', input.images?.length || 0);
 
       const metadata = this.createMetadata(userId);
       const response = await firstValueFrom(
         this.feedService.updateFeed(request, metadata),
       );
+
+      console.log('UpdateFeed Response:', JSON.stringify(response, null, 2));
 
       if (!response.success) {
         throw new GraphQLError(response.message || 'Failed to update feed');
