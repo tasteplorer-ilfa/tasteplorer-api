@@ -112,7 +112,7 @@ type FeedDto {
   createdAt: String!
   id: ID!
   images: [FeedImageDto!]!
-  recipeId: Int
+  recipe: FeedRecipeDto
   updatedAt: String!
   user: FeedUserDto!
 }
@@ -132,6 +132,11 @@ type FeedListDto {
   feeds: [FeedDto!]!
   hasMore: Boolean!
   nextCursor: String
+}
+
+type FeedRecipeDto {
+  id: Int!
+  title: String!
 }
 
 type FeedUserDto {
@@ -400,6 +405,8 @@ type SuggestedUserDto {
 
 input UpdateFeedInput {
   content: String!
+  images: [FeedImageInput!] = []
+  recipeId: Int = 0
 }
 
 input UpdateUserInput {

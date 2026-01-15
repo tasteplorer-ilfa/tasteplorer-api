@@ -20,6 +20,8 @@ export interface GetFeedRequest {
 export interface UpdateFeedRequest {
   feed_id: string;
   content: string;
+  recipe_id: number;
+  images: FeedImageInput[];
 }
 
 export interface DeleteFeedRequest {
@@ -82,10 +84,15 @@ export interface FeedUser {
   profile_image_url: string;
 }
 
+export interface FeedRecipe {
+  id: number;
+  title: string;
+}
+
 export interface Feed {
   id: string;
   user: FeedUser;
-  recipe_id: number;
+  recipe: FeedRecipe;
   content: string;
   created_at: string;
   updated_at: string;
