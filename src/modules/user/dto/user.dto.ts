@@ -187,3 +187,55 @@ export class UserSuggestionListDto {
   @Field(() => Boolean, { description: 'Has more suggestions' })
   hasMore: boolean;
 }
+
+// ============================================================================
+// Follow Feature DTOs
+// ============================================================================
+
+@ObjectType()
+export class UserSummaryDto {
+  @Field(() => Int)
+  id: number;
+
+  @Field()
+  username: string;
+
+  @Field()
+  fullname: string;
+
+  @Field({ nullable: true })
+  image?: string;
+
+  @Field()
+  isFollowedByMe: boolean;
+
+  @Field({ description: 'Whether this user is the authenticated viewer' })
+  isMe: boolean;
+}
+
+@ObjectType()
+export class PageInfoDto {
+  @Field(() => Int, { nullable: true })
+  nextCursor?: number;
+
+  @Field()
+  hasNext: boolean;
+}
+
+@ObjectType()
+export class FollowerListDto {
+  @Field(() => [UserSummaryDto])
+  users: UserSummaryDto[];
+
+  @Field(() => PageInfoDto)
+  pageInfo: PageInfoDto;
+}
+
+@ObjectType()
+export class FollowingListDto {
+  @Field(() => [UserSummaryDto])
+  users: UserSummaryDto[];
+
+  @Field(() => PageInfoDto)
+  pageInfo: PageInfoDto;
+}

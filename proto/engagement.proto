@@ -12,18 +12,41 @@ service EngagementService {
     rpc TrackEvent (EventRequest) returns (EngagementResponse);
 }
 
+// ============================================================================
+// User Suggestion Service (Instagram-style recommendations)
+// ============================================================================
 service UserSuggestionService {
+    // Get personalized user suggestions based on social graph
     rpc GetSuggestedUsers (GetSuggestedUsersRequest) returns (GetSuggestedUsersResponse);
+    
+    // Get explanation for why a user was suggested
     rpc GetSuggestionReason (GetSuggestionReasonRequest) returns (GetSuggestionReasonResponse);
 }
 
+// ============================================================================
+// Feed Service (Social Feed Feature)
+// ============================================================================
 service FeedService {
+    // CRUD operations
     rpc CreateFeed (CreateFeedRequest) returns (CreateFeedResponse);
     rpc GetFeed (GetFeedRequest) returns (GetFeedResponse);
     rpc UpdateFeed (UpdateFeedRequest) returns (UpdateFeedResponse);
     rpc DeleteFeed (DeleteFeedRequest) returns (DeleteFeedResponse);
+    
+    // Listing operations with cursor pagination
     rpc ListHomeFeed (ListHomeFeedRequest) returns (ListHomeFeedResponse);
     rpc ListUserFeeds (ListUserFeedsRequest) returns (ListUserFeedsResponse);
+}
+
+// ============================================================================
+// Follow Service (Social Graph - Followers & Following)
+// ============================================================================
+service FollowService {
+    // Get list of users who follow the target user
+    rpc ListFollowers (ListFollowersRequest) returns (ListFollowersResponse);
+    
+    // Get list of users that the target user follows
+    rpc ListFollowing (ListFollowingRequest) returns (ListFollowingResponse);
 }
 
 message LikeRequest {
@@ -205,4 +228,51 @@ message FeedImage {
     string id = 1;  // UUID string
     string image_url = 2;
     int32 position = 3;
+}
+
+// ============================================================================
+// Follow Service Messages
+// ============================================================================
+
+message UserSummary {
+    int32 id = 1;
+    string username = 2;
+    string fullname = 3;
+    string image = 4;
+    bool is_followed_by_me = 5;  // Whether viewer follows this user
+    bool is_me = 6;               // Whether this user is the viewer (user_id == viewer_id)
+}
+
+// Pagination metadata for cursor-based pagination
+message PageInfo {
+    int64 next_cursor = 1;  // ID-based cursor for next page
+    bool has_next = 2;      // Whether more results exist
+}
+
+// Request to list followers of a user
+message ListFollowersRequest {
+    int32 user_id = 1;     // Target user whose followers to retrieve
+    int32 viewer_id = 2;   // Authenticated user making the request
+    int32 limit = 3;       // Max results per page (default 20, max 100)
+    int64 cursor = 4;      // Optional: user_follows.id for pagination
+}
+
+// Response containing list of followers
+message ListFollowersResponse {
+    repeated UserSummary users = 1;
+    PageInfo page_info = 2;
+}
+
+// Request to list users that target user follows
+message ListFollowingRequest {
+    int32 user_id = 1;     // Target user whose following to retrieve
+    int32 viewer_id = 2;   // Authenticated user making the request
+    int32 limit = 3;       // Max results per page (default 20, max 100)
+    int64 cursor = 4;      // Optional: user_follows.id for pagination
+}
+
+// Response containing list of following users
+message ListFollowingResponse {
+    repeated UserSummary users = 1;
+    PageInfo page_info = 2;
 }

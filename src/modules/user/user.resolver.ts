@@ -6,6 +6,8 @@ import {
   UserConnection,
   UsersQueryInput,
   UserSuggestionListDto,
+  FollowerListDto,
+  FollowingListDto,
 } from './dto/user.dto';
 import { UserService } from './user.service';
 import { UseGuards } from '@nestjs/common';
@@ -82,5 +84,33 @@ export class UserResolver {
     offset: number,
   ): Promise<UserSuggestionListDto> {
     return this.userService.getSuggestedUsers(user.sub, limit, offset);
+  }
+
+  // ============================================================================
+  // Follow Feature Queries
+  // ============================================================================
+
+  @Query(() => FollowerListDto, { name: 'followers' })
+  @UseGuards(JwtAuthGuard)
+  async listFollowers(
+    @Args('userId', { type: () => Int }) userId: number,
+    @Args('cursor', { type: () => Int, nullable: true }) cursor: number,
+    @Args('limit', { type: () => Int, nullable: true, defaultValue: 20 })
+    limit: number,
+    @CurrentUser() viewer: TokenPayload,
+  ): Promise<FollowerListDto> {
+    return this.userService.listFollowers(userId, viewer.sub, cursor, limit);
+  }
+
+  @Query(() => FollowingListDto, { name: 'following' })
+  @UseGuards(JwtAuthGuard)
+  async listFollowing(
+    @Args('userId', { type: () => Int }) userId: number,
+    @Args('cursor', { type: () => Int, nullable: true }) cursor: number,
+    @Args('limit', { type: () => Int, nullable: true, defaultValue: 20 })
+    limit: number,
+    @CurrentUser() viewer: TokenPayload,
+  ): Promise<FollowingListDto> {
+    return this.userService.listFollowing(userId, viewer.sub, cursor, limit);
   }
 }
