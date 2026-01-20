@@ -15,6 +15,10 @@ import {
   UpdateUserInput,
   UserDto,
   UserSuggestionListDto,
+  UserSummaryDto,
+  PageInfoDto,
+  FollowerListDto,
+  FollowingListDto,
 } from './dto/user.dto';
 import {
   hashingPassword,
@@ -29,6 +33,11 @@ import { ClientGrpc, ClientProxy } from '@nestjs/microservices';
 import {
   GetSuggestedUsersRequest,
   UserSuggestionService,
+  FollowService,
+  ListFollowersRequest,
+  ListFollowingRequest,
+  UserSummary,
+  PageInfo,
 } from './grpc/engagement.interface';
 import { firstValueFrom } from 'rxjs';
 import { Metadata } from '@grpc/grpc-js';
@@ -36,6 +45,7 @@ import { Metadata } from '@grpc/grpc-js';
 @Injectable()
 export class UserService implements OnModuleInit {
   private userSuggestionService: UserSuggestionService;
+  private followService: FollowService;
 
   constructor(
     private userRepository: UserRepository,
@@ -49,6 +59,8 @@ export class UserService implements OnModuleInit {
       this.engagementClient.getService<UserSuggestionService>(
         'UserSuggestionService',
       );
+    this.followService =
+      this.engagementClient.getService<FollowService>('FollowService');
   }
 
   async create(userRegisterInput: UserRegisterInput): Promise<UserDto> {
@@ -370,6 +382,86 @@ export class UserService implements OnModuleInit {
       }
       throw new GraphQLError(
         error.message || 'Failed to fetch user suggestions',
+      );
+    }
+  }
+
+  // ============================================================================
+  // Follow Feature Methods
+  // ============================================================================
+
+  private mapUserSummaryDto(user: UserSummary): UserSummaryDto {
+    return {
+      id: user.id,
+      username: user.username,
+      fullname: user.fullname,
+      image: user.image || null,
+      isFollowedByMe: user.is_followed_by_me,
+      isMe: user.is_me,
+    };
+  }
+
+  private mapPageInfoDto(pageInfo: PageInfo): PageInfoDto {
+    return {
+      nextCursor: pageInfo.next_cursor || null,
+      hasNext: pageInfo.has_next,
+    };
+  }
+
+  async listFollowers(
+    userId: number,
+    viewerId: number,
+    cursor?: number,
+    limit: number = 20,
+  ): Promise<FollowerListDto> {
+    try {
+      const request: ListFollowersRequest = {
+        user_id: userId,
+        viewer_id: viewerId,
+        limit: limit,
+        cursor: cursor || 0,
+      };
+
+      const response = await firstValueFrom(
+        this.followService.listFollowers(request),
+      );
+
+      return {
+        users: response.users.map((user) => this.mapUserSummaryDto(user)),
+        pageInfo: this.mapPageInfoDto(response.page_info),
+      };
+    } catch (error) {
+      throw new GraphQLError(
+        error.message || 'An error occurred while fetching followers',
+      );
+    }
+  }
+
+  async listFollowing(
+    userId: number,
+    viewerId: number,
+    cursor?: number,
+    limit: number = 20,
+  ): Promise<FollowingListDto> {
+    try {
+      const request: ListFollowingRequest = {
+        user_id: userId,
+        viewer_id: viewerId,
+        limit: limit,
+        cursor: cursor || 0,
+      };
+
+      const response = await firstValueFrom(
+        this.followService.listFollowing(request),
+      );
+
+      return {
+        users: response.users.map((user) => this.mapUserSummaryDto(user)),
+        pageInfo: this.mapPageInfoDto(response.page_info),
+      };
+    } catch (error) {
+      throw new GraphQLError(
+        error.message || 'An error occurred while fetching following',
       );
     }
   }

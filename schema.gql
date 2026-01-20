@@ -145,6 +145,16 @@ type FeedUserDto {
   username: String!
 }
 
+type FollowerListDto {
+  pageInfo: PageInfoDto!
+  users: [UserSummaryDto!]!
+}
+
+type FollowingListDto {
+  pageInfo: PageInfoDto!
+  users: [UserSummaryDto!]!
+}
+
 input LoginInput {
   """User Password"""
   password: String!
@@ -186,6 +196,11 @@ type Mutation {
   updateRecipe(id: ID!, input: RecipeInput!): RecipeDto!
   updateUser(id: ID!, input: UpdateUserInput!): UserDto!
   uploadSingleFile(file: Upload!, setting: UploadParamInput!): CloudinaryResponseDto!
+}
+
+type PageInfoDto {
+  hasNext: Boolean!
+  nextCursor: Int
 }
 
 type ProfileDTO {
@@ -230,6 +245,8 @@ type Query {
   bannerList(page: Int!, pageSize: Int!): BannerListDto!
   currentUser: ProfileDTO!
   feed(id: ID!): FeedDto!
+  followers(cursor: Int, limit: Int = 20, userId: Int!): FollowerListDto!
+  following(cursor: Int, limit: Int = 20, userId: Int!): FollowingListDto!
   homeFeeds(cursor: String, limit: Int = 20): FeedListDto!
   myRecipeDetail(id: Int!): RecipeDto!
   myRecipeList(after: String, limit: Int = 10, search: String): RecipeListDataDto!
@@ -525,6 +542,17 @@ type UserSuggestionListDto {
 
   """List of suggested users"""
   users: [SuggestedUserDto!]!
+}
+
+type UserSummaryDto {
+  fullname: String!
+  id: Int!
+  image: String
+  isFollowedByMe: Boolean!
+
+  """Whether this user is the authenticated viewer"""
+  isMe: Boolean!
+  username: String!
 }
 
 input UsersQueryInput {
