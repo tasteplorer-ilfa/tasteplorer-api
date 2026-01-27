@@ -1,5 +1,5 @@
 import { UserDto } from '@module/user/dto/user.dto';
-import { Field, ID, InputType, ObjectType } from '@nestjs/graphql';
+import { Field, ID, InputType, ObjectType, Int, Float } from '@nestjs/graphql';
 import { RecipeIngredientDto } from './recipe-ingredient.dto';
 import { RecipeInstructionDto } from './recipe-instruction.dto';
 import { RecipeMediaDto } from './recipe-media.dto';
@@ -28,6 +28,15 @@ export class RecipeDto {
 
   @Field(() => String, { description: 'Recipe Cooking Time' })
   cookingTime: string;
+
+  @Field(() => Int, { description: 'Denormalized likes count' })
+  likesCount: number;
+
+  @Field(() => Float, {
+    description: 'Calculated hot score (popularity)',
+    nullable: true,
+  })
+  hotScore?: number;
 
   @Field(() => UserDto, { description: 'Recipe Author Detail' })
   author: UserDto;
