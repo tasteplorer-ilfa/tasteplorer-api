@@ -9,6 +9,34 @@ import { RecipeInstructionDto } from './dto/recipe-instruction.dto';
 import { RecipeMediaDto } from './dto/recipe-media.dto';
 import { UserDto } from '@module/user/dto/user.dto';
 import { RecipeRepository } from './recipe.repository';
+import { decodeCompositeCursor, decodeCursor } from '@common/utils/cursor';
+
+function safeSerializeError(err: any): string {
+  try {
+    if (err instanceof Error) {
+      return err.stack || err.message;
+    }
+    const obj: any = {};
+    Object.getOwnPropertyNames(err || {}).forEach((k) => {
+      try {
+        const v = (err as any)[k];
+        // primitive or JSON-serializable only
+        if (typeof v === 'object') {
+          obj[k] = Object.prototype.toString.call(v);
+        } else if (typeof v === 'function') {
+          obj[k] = '[function]';
+        } else {
+          obj[k] = v;
+        }
+      } catch (e) {
+        obj[k] = '[unreadable]';
+      }
+    });
+    return JSON.stringify(obj);
+  } catch (e) {
+    return 'Unserializable error';
+  }
+}
 
 @Injectable()
 export class RecipeService {
@@ -29,7 +57,8 @@ export class RecipeService {
 
       return this.findOne(createdRecipe);
     } catch (error) {
-      throw new GraphQLError(error.message);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new GraphQLError(message);
     }
   }
 
@@ -56,62 +85,111 @@ export class RecipeService {
           ...(hasNextPage !== undefined ? { hasNextPage } : {}),
         };
       } else {
-        // Cursor-based pagination
-        const result = await this.recipeRepository.findAll({ after, limit });
-        recipes = result.recipes.map((recipe) => this.mapRecipeDto(recipe));
-        meta = {
-          total: result.meta.total,
-          ...(result.meta.endCursor && { endCursor: result.meta.endCursor }),
-          ...(result.meta.hasNextPage !== undefined
-            ? { hasNextPage: result.meta.hasNextPage }
-            : {}),
-        };
+        // Cursor-based pagination for hot feed using composite cursor
+        let afterScore: number | undefined = undefined;
+        let afterDate: string | undefined = undefined;
+
+        if (after) {
+          const decoded = decodeCompositeCursor(after);
+          if (decoded) {
+            afterScore = decoded.score;
+            afterDate = decoded.date;
+          } else {
+            // Fallback for legacy date-only cursor
+            const dateOnly = decodeCursor(after);
+            afterDate = dateOnly;
+          }
+        }
+
+        try {
+          const result = await this.recipeRepository.findAll({
+            afterScore,
+            afterDate,
+            limit,
+          });
+          recipes = result.recipes.map((recipe) => this.mapRecipeDto(recipe));
+          meta = {
+            total: result.meta.total,
+            ...(result.meta.endCursor && { endCursor: result.meta.endCursor }),
+            ...(result.meta.hasNextPage !== undefined
+              ? { hasNextPage: result.meta.hasNextPage }
+              : {}),
+          };
+        } catch (repoError) {
+          // Safely serialize repository error for logs and throw a clean GraphQLError
+          let serialized: string;
+          if (repoError instanceof Error) {
+            serialized = repoError.stack || repoError.message;
+          } else {
+            try {
+              serialized = String(repoError);
+            } catch (ee) {
+              serialized = 'Unserializable error';
+            }
+          }
+          console.error('RecipeRepository.findAll error:', serialized);
+          const message =
+            repoError instanceof Error
+              ? repoError.message
+              : 'Internal server error';
+          throw new Error(message);
+        }
       }
 
       return new RecipeListDataDto({ recipes, meta });
     } catch (error) {
-      throw new GraphQLError(error.message);
+      // Log safely and return a generic GraphQLError to avoid GraphQL exposing internals
+      console.error(
+        'RecipeService.findAll unexpected error:',
+        safeSerializeError(error),
+      );
+      throw new GraphQLError('Internal server error');
     }
   }
 
   private mapRecipeDto(recipe: any): RecipeDto {
-    const createdAt: string = utcToAsiaJakarta(recipe.createdAt);
-    const updatedAt: string = utcToAsiaJakarta(recipe.updatedAt);
-    const ingredients = recipe.ingredients.map(
-      (ingredient) =>
-        new RecipeIngredientDto({
-          ...ingredient,
-          createdAt: utcToAsiaJakarta(ingredient.createdAt),
-          updatedAt: utcToAsiaJakarta(ingredient.updatedAt),
-        }),
-    );
-    const instructions = recipe.instructions.map(
-      (instruction) =>
-        new RecipeInstructionDto({
-          ...instruction,
-          createdAt: utcToAsiaJakarta(instruction.createdAt),
-          updatedAt: utcToAsiaJakarta(instruction.updatedAt),
-        }),
-    );
-    const image: RecipeMediaDto = new RecipeMediaDto({
-      ...recipe.image,
-      createdAt: utcToAsiaJakarta(recipe.image.createdAt),
-      updatedAt: utcToAsiaJakarta(recipe.image.updatedAt),
-    });
-    const author: UserDto = new UserDto({
-      ...recipe.user,
-      createdAt: utcToAsiaJakarta(recipe.user.createdAt),
-      updatedAt: utcToAsiaJakarta(recipe.user.updatedAt),
-    });
-    return {
-      ...recipe,
-      ingredients,
-      instructions,
-      image,
-      author,
-      createdAt,
-      updatedAt,
-    };
+    try {
+      const createdAt: string = utcToAsiaJakarta(recipe.createdAt);
+      const updatedAt: string = utcToAsiaJakarta(recipe.updatedAt);
+      const ingredients = recipe.ingredients.map(
+        (ingredient) =>
+          new RecipeIngredientDto({
+            ...ingredient,
+            createdAt: utcToAsiaJakarta(ingredient.createdAt),
+            updatedAt: utcToAsiaJakarta(ingredient.updatedAt),
+          }),
+      );
+      const instructions = recipe.instructions.map(
+        (instruction) =>
+          new RecipeInstructionDto({
+            ...instruction,
+            createdAt: utcToAsiaJakarta(instruction.createdAt),
+            updatedAt: utcToAsiaJakarta(instruction.updatedAt),
+          }),
+      );
+      const image: RecipeMediaDto = new RecipeMediaDto({
+        ...recipe.image,
+        createdAt: utcToAsiaJakarta(recipe.image.createdAt),
+        updatedAt: utcToAsiaJakarta(recipe.image.updatedAt),
+      });
+      const author: UserDto = new UserDto({
+        ...recipe.user,
+        createdAt: utcToAsiaJakarta(recipe.user.createdAt),
+        updatedAt: utcToAsiaJakarta(recipe.user.updatedAt),
+      });
+      return {
+        ...recipe,
+        ingredients,
+        instructions,
+        image,
+        author,
+        createdAt,
+        updatedAt,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new GraphQLError(message);
+    }
   }
 
   async findOne(id: number): Promise<RecipeDto> {
@@ -168,7 +246,8 @@ export class RecipeService {
 
       return result;
     } catch (error) {
-      throw new GraphQLError(error.message);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new GraphQLError(message);
     }
   }
 
@@ -253,7 +332,8 @@ export class RecipeService {
 
       return recipeList;
     } catch (error) {
-      throw new GraphQLError(error.message);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new GraphQLError(message);
     }
   }
 
@@ -338,7 +418,8 @@ export class RecipeService {
 
       return recipeList;
     } catch (error) {
-      throw new GraphQLError(error.message);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new GraphQLError(message);
     }
   }
 
@@ -395,7 +476,8 @@ export class RecipeService {
 
       return result;
     } catch (error) {
-      throw new GraphQLError(error.message);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new GraphQLError(message);
     }
   }
 
@@ -415,7 +497,8 @@ export class RecipeService {
 
       return this.findOne(existingRecipe.id);
     } catch (error) {
-      throw new GraphQLError(error.message);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new GraphQLError(message);
     }
   }
 
@@ -431,7 +514,8 @@ export class RecipeService {
 
       return 'Recipe berhasil dihapus.';
     } catch (error) {
-      throw new GraphQLError(error.message);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new GraphQLError(message);
     }
   }
 }

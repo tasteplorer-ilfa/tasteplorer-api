@@ -10,6 +10,7 @@ import { ClientGrpc } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { SearchRequest, SearchService } from './grpc/search.interface';
 import { encodeCursor, decodeCursor } from '@common/utils/cursor';
+import { encodeCompositeCursor } from '@common/utils/cursor';
 
 @Injectable()
 export class RecipeRepository implements OnModuleInit {
@@ -106,45 +107,86 @@ export class RecipeRepository implements OnModuleInit {
     });
   }
 
-  async findAll({ after, limit = 25 }: { after?: string; limit?: number }) {
+  async findAll({
+    afterScore,
+    afterDate,
+    limit = 25,
+  }: {
+    afterScore?: number;
+    afterDate?: string;
+    limit?: number;
+  }) {
+    const alias = 'recipes';
     // Query builder untuk data (pakai after/cursor)
     const qb = this.repository
-      .createQueryBuilder('recipes')
-      .innerJoinAndSelect(
-        'recipes.ingredients',
-        'ingredients',
-        'ingredients.deleted_at IS NULL',
-      )
-      .innerJoinAndSelect(
-        'recipes.instructions',
-        'instructions',
-        'instructions.deleted_at IS NULL',
-      )
-      .innerJoinAndSelect('recipes.image', 'image', 'image.deleted_at IS NULL')
-      .innerJoinAndSelect('recipes.user', 'user')
-      .where('recipes.deleted_at IS NULL');
+      .createQueryBuilder(alias)
+      .innerJoinAndSelect(`${alias}.ingredients`, 'ingredients')
+      .innerJoinAndSelect(`${alias}.instructions`, 'instructions')
+      .innerJoinAndSelect(`${alias}.image`, 'image')
+      .innerJoinAndSelect(`${alias}.user`, 'user')
+      .where(`${alias}.deletedAt IS NULL`)
+      .andWhere('ingredients.deletedAt IS NULL')
+      .andWhere('instructions.deletedAt IS NULL')
+      .andWhere('image.deletedAt IS NULL');
 
-    if (after) {
-      const afterDate = decodeCursor(after);
-      qb.andWhere('recipes.createdAt < :after', { after: afterDate });
+    // Pagination logic: support composite cursor (hot_score, created_at) and fallback to created_at-only
+    if (afterScore !== undefined && afterDate) {
+      // Use explicit logic instead of SQL row-value comparison for portability:
+      // (hot_score < :score) OR (hot_score = :score AND created_at < :date)
+      qb.andWhere(
+        `(${alias}.hotScore < :score OR (${alias}.hotScore = :score AND ${alias}.createdAt < :date))`,
+        {
+          score: afterScore,
+          date: afterDate,
+        },
+      );
+    } else if (afterDate) {
+      // backward compatibility: date-only cursor (use raw column)
+      qb.andWhere(`${alias}.createdAt < :after`, { after: afterDate });
     }
-    qb.orderBy('recipes.createdAt', 'DESC').take(limit + 1);
+
+    // Order by hot_score desc, then created_at desc as tiebreaker
+    qb.orderBy(`${alias}.hotScore`, 'DESC')
+      .addOrderBy(`${alias}.createdAt`, 'DESC')
+      .take(limit + 1);
 
     // Query builder untuk count (hanya filter global, TANPA after/cursor)
     const countQb = this.repository
-      .createQueryBuilder('recipes')
-      .where('recipes.deleted_at IS NULL');
+      .createQueryBuilder(alias)
+      .where(`${alias}.deletedAt IS NULL`);
 
-    const [total, recipes] = await Promise.all([
-      countQb.getCount(),
-      qb.getMany(),
-    ]);
+    let total: number;
+    let recipes: Recipe[];
+    try {
+      const results = await Promise.all([countQb.getCount(), qb.getMany()]);
+      total = results[0] as number;
+      recipes = results[1] as Recipe[];
+    } catch (dbError) {
+      // Avoid accessing properties on dbError that may have getters (like driver/databaseName)
+      let serialized: string;
+      if (dbError instanceof Error) {
+        serialized = dbError.stack || dbError.message;
+      } else {
+        try {
+          serialized = String(dbError);
+        } catch (ee) {
+          serialized = 'Unserializable DB error';
+        }
+      }
+      console.error('DB error in RecipeRepository.findAll:', serialized);
+      throw new Error(
+        dbError instanceof Error ? dbError.message : 'Database error',
+      );
+    }
 
     const hasNextPage = recipes.length > limit;
     const nodes = recipes.slice(0, limit);
     const endCursor =
       nodes.length > 0
-        ? encodeCursor(nodes[nodes.length - 1].createdAt)
+        ? encodeCompositeCursor(
+            nodes[nodes.length - 1].hotScore ?? 0,
+            nodes[nodes.length - 1].createdAt,
+          )
         : undefined;
     const totalPage = Math.ceil(total / limit);
 
@@ -167,17 +209,17 @@ export class RecipeRepository implements OnModuleInit {
       .innerJoinAndSelect(
         'recipes.ingredients',
         'ingredients',
-        'ingredients.deleted_at IS NULL',
+        'ingredients.deletedAt IS NULL',
       )
       .innerJoinAndSelect(
         'recipes.instructions',
         'instructions',
-        'instructions.deleted_at IS NULL',
+        'instructions.deletedAt IS NULL',
       )
-      .innerJoinAndSelect('recipes.image', 'image', 'image.deleted_at IS NULL')
+      .innerJoinAndSelect('recipes.image', 'image', 'image.deletedAt IS NULL')
       .innerJoinAndSelect('recipes.user', 'user')
       .where('recipes.id = :id', { id })
-      .andWhere('recipes.deleted_at IS NULL')
+      .andWhere('recipes.deletedAt IS NULL')
       .getOne();
   }
 
@@ -193,16 +235,16 @@ export class RecipeRepository implements OnModuleInit {
       .innerJoinAndSelect(
         'recipes.ingredients',
         'ingredients',
-        'ingredients.deleted_at IS NULL',
+        'ingredients.deletedAt IS NULL',
       )
       .innerJoinAndSelect(
         'recipes.instructions',
         'instructions',
-        'instructions.deleted_at IS NULL',
+        'instructions.deletedAt IS NULL',
       )
-      .innerJoinAndSelect('recipes.image', 'image', 'image.deleted_at IS NULL')
+      .innerJoinAndSelect('recipes.image', 'image', 'image.deletedAt IS NULL')
       .innerJoinAndSelect('recipes.user', 'user')
-      .where('recipes.deleted_at IS NULL')
+      .where('recipes.deletedAt IS NULL')
       .andWhere('recipes.userId = :userId', { userId });
 
     if (search) {
@@ -218,7 +260,7 @@ export class RecipeRepository implements OnModuleInit {
     // Query builder untuk count (hanya filter global dan userId, TANPA after/cursor)
     const countQb = this.repository
       .createQueryBuilder('recipes')
-      .where('recipes.deleted_at IS NULL')
+      .where('recipes.deletedAt IS NULL')
       .andWhere('recipes.userId = :userId', { userId });
 
     if (search) {
@@ -265,16 +307,16 @@ export class RecipeRepository implements OnModuleInit {
       .innerJoinAndSelect(
         'recipes.ingredients',
         'ingredients',
-        'ingredients.deleted_at IS NULL',
+        'ingredients.deletedAt IS NULL',
       )
       .innerJoinAndSelect(
         'recipes.instructions',
         'instructions',
-        'instructions.deleted_at IS NULL',
+        'instructions.deletedAt IS NULL',
       )
-      .innerJoinAndSelect('recipes.image', 'image', 'image.deleted_at IS NULL')
+      .innerJoinAndSelect('recipes.image', 'image', 'image.deletedAt IS NULL')
       .innerJoinAndSelect('recipes.user', 'user')
-      .where('recipes.deleted_at IS NULL')
+      .where('recipes.deletedAt IS NULL')
       .andWhere('recipes.userId = :userId', { userId });
 
     if (search) {
@@ -290,7 +332,7 @@ export class RecipeRepository implements OnModuleInit {
     // Query builder untuk count (hanya filter global dan userId, TANPA after/cursor)
     const countQb = this.repository
       .createQueryBuilder('recipes')
-      .where('recipes.deleted_at IS NULL')
+      .where('recipes.deletedAt IS NULL')
       .andWhere('recipes.userId = :userId', { userId });
 
     if (search) {
@@ -331,17 +373,17 @@ export class RecipeRepository implements OnModuleInit {
       .innerJoinAndSelect(
         'recipes.ingredients',
         'ingredients',
-        'ingredients.deleted_at IS NULL',
+        'ingredients.deletedAt IS NULL',
       )
       .innerJoinAndSelect(
         'recipes.instructions',
         'instructions',
-        'instructions.deleted_at IS NULL',
+        'instructions.deletedAt IS NULL',
       )
-      .innerJoinAndSelect('recipes.image', 'image', 'image.deleted_at IS NULL')
+      .innerJoinAndSelect('recipes.image', 'image', 'image.deletedAt IS NULL')
       .innerJoinAndSelect('recipes.user', 'user')
       .where('recipes.id = :id', { id })
-      .andWhere('recipes.deleted_at IS NULL')
+      .andWhere('recipes.deletedAt IS NULL')
       .andWhere('recipes.userId = :userId', { userId })
       .getOne();
   }

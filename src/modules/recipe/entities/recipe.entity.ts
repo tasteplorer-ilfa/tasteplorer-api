@@ -50,6 +50,17 @@ export class Recipe extends AbstractEntity<Recipe> {
   @Column({ name: 'deleted_at', nullable: true })
   deletedAt: Date;
 
+  @Column({ name: 'likes_count', type: 'int', default: 0 })
+  likesCount: number;
+
+  @Column({
+    name: 'hot_score',
+    type: 'double precision',
+    nullable: true,
+    default: 0,
+  })
+  hotScore: number;
+
   // ToDo: we will add recipe relationship OneToMany below
 
   @ManyToOne(() => User, (user) => user.recipes)

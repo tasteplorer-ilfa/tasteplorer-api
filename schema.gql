@@ -275,6 +275,9 @@ type RecipeDto {
   """Recipe Description"""
   description: String
 
+  """Calculated hot score (popularity)"""
+  hotScore: Float
+
   """Recipe ID"""
   id: ID!
 
@@ -289,6 +292,9 @@ type RecipeDto {
 
   """Is A Favorite Recipe"""
   isFavorite: Boolean
+
+  """Denormalized likes count"""
+  likesCount: Int!
 
   """Recipe Servings"""
   servings: String!
