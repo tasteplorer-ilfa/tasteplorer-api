@@ -12,6 +12,7 @@ import {
 import { UserService } from './user.service';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '@module/auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '@module/auth/guards/optional-jwt-auth.guard';
 import { InputValidationPipe } from '@common/middleware/auth/input-validation.pipe';
 import { UserValidationSchema } from './dto/user.validation.schema';
 import { CurrentUser } from './decorator/current-user.decorator';
@@ -24,7 +25,16 @@ export class UserResolver {
   @Query(() => ProfileDTO, { name: 'currentUser' })
   @UseGuards(JwtAuthGuard)
   async currentUser(@CurrentUser() user: TokenPayload) {
-    return this.userService.findById(user.sub);
+    const profile = await this.userService.findById(user.sub);
+    // Remove follower lists from currentUser response as they're not needed on profile page
+    if (profile) {
+      // delete properties if present to avoid breaking schema elsewhere
+      // keep totalFollowers/totalFollowing in place
+      // cast to any to allow deleting optional or missing properties
+      delete (profile as any).followers;
+      delete (profile as any).following;
+    }
+    return profile;
   }
 
   @Query(() => ProfileDTO, { name: 'userProfile' })
@@ -65,12 +75,18 @@ export class UserResolver {
   }
 
   @Query(() => UserConnection, { name: 'users' })
-  async users(@Args('input', { nullable: true }) input?: UsersQueryInput) {
+  @UseGuards(OptionalJwtAuthGuard)
+  async users(
+    @Args('input', { nullable: true }) input?: UsersQueryInput,
+    @CurrentUser() viewer?: TokenPayload,
+  ) {
     const { search, cursor, limit } = input || {};
+    const viewerId = viewer ? Number(viewer.sub) : undefined;
     return this.userService.findUsersWithCursorPagination(
       search,
       cursor,
       limit,
+      viewerId,
     );
   }
 

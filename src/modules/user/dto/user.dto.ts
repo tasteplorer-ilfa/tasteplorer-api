@@ -34,10 +34,29 @@ export class UserDto {
 
   @Field(() => Date, { description: 'User Deleted At', nullable: true })
   deletedAt?: Date;
+
+  // Follow-state helpers for list view
+  @Field(() => Boolean, {
+    description: 'Whether the authenticated viewer follows this user',
+    nullable: true,
+  })
+  isFollowedByMe?: boolean;
+
+  @Field(() => Boolean, {
+    description: 'Whether this user is the authenticated viewer',
+    nullable: true,
+  })
+  isMe?: boolean;
 }
 
 @ObjectType()
 export class ProfileDTO extends UserDto {
+  @Field(() => Int, { description: 'Total followers', nullable: true })
+  totalFollowers?: number;
+
+  @Field(() => Int, { description: 'Total following', nullable: true })
+  totalFollowing?: number;
+
   @Field(() => UserFollowListData, {
     description: 'List of followers',
     nullable: true,

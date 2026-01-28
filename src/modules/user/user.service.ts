@@ -163,15 +163,28 @@ export class UserService implements OnModuleInit {
   async findById(id: number) {
     try {
       const user = await this.userRepository.findById(id);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Get follower/following counts via efficient COUNT queries
+      const [followersCount, followingCount] = await Promise.all([
+        this.userRepository.countFollowers(id),
+        this.userRepository.countFollowing(id),
+      ]);
 
       const createdAt: string = utcToAsiaJakarta(user.createdAt);
       const updatedAt: string = utcToAsiaJakarta(user.updatedAt);
 
-      const result: ProfileDTO = new ProfileDTO({
+      const payload: any = {
         ...user,
         createdAt,
         updatedAt,
-      });
+        totalFollowers: followersCount,
+        totalFollowing: followingCount,
+      };
+
+      const result: ProfileDTO = new ProfileDTO(payload);
 
       return result;
     } catch (error) {
@@ -243,11 +256,13 @@ export class UserService implements OnModuleInit {
    * @param search - Search term for username or fullname
    * @param cursor - Cursor for pagination (last user ID)
    * @param limit - Number of results per page (default 20, max 50)
+   * @param viewerId - ID of the viewer for follow relationship checks
    */
   async findUsersWithCursorPagination(
     search?: string,
     cursor?: number,
     limit: number = 20,
+    viewerId?: number,
   ) {
     try {
       // Enforce limit boundaries
@@ -271,6 +286,18 @@ export class UserService implements OnModuleInit {
       const nextCursor =
         hasMore && data.length > 0 ? data[data.length - 1].id : null;
 
+      // Prepare follow relationship batch if viewer is authenticated
+      const userIds = data.map((u) => u.id);
+      let followedIds = new Set<string>();
+      if (viewerId && userIds.length > 0) {
+        const followed = await this.userRepository.getFollowedUserIdsByViewer(
+          viewerId,
+          userIds,
+        );
+        // Normalize to string IDs to avoid number|string mismatches
+        followedIds = new Set(followed.map((id) => String(id)));
+      }
+
       // Map to DTOs with timezone conversion
       const userDtos = data.map((user) => {
         const createdAt = utcToAsiaJakarta(user.createdAt);
@@ -280,6 +307,8 @@ export class UserService implements OnModuleInit {
           ...user,
           createdAt,
           updatedAt,
+          isMe: viewerId ? String(user.id) === String(viewerId) : false,
+          isFollowedByMe: viewerId ? followedIds.has(String(user.id)) : false,
         });
       });
 

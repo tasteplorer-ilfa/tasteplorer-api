@@ -4,7 +4,6 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { UserRegisterInput } from '@module/auth/dto/auth.dto';
 import { UserFollow } from './entities/user-follow.entity';
-import { UserFollowDTO, UserFollowListData } from './dto/user.dto';
 
 @Injectable()
 export class UserRepository {
@@ -60,31 +59,32 @@ export class UserRepository {
   }
 
   async findById(id: number) {
-    const result = await this.repository
+    // Avoid loading followers/following relations here to prevent heavy queries.
+    // Return only user basic data; follower/following totals should be obtained via count helpers.
+    const user = await this.repository
       .createQueryBuilder('users')
-      .leftJoinAndSelect('users.followers', 'followers')
-      .leftJoinAndSelect('followers.follower', 'followerUser')
-      .leftJoinAndSelect('users.following', 'following')
-      .leftJoinAndSelect('following.following', 'followingUser')
-      .where('users.id = :id', { id: id })
+      .select([
+        'users.id',
+        'users.fullname',
+        'users.email',
+        'users.username',
+        'users.image',
+        'users.birthDate',
+        'users.createdAt',
+        'users.updatedAt',
+        'users.deletedAt',
+        'users.password',
+      ])
+      .where('users.id = :id', { id })
       .andWhere('users.deleted_at IS NULL')
       .getOne();
 
-    if (!result) return null;
+    if (!user) return null;
 
-    delete result.password;
+    // Remove password before returning
+    delete user.password;
 
-    return {
-      ...result,
-      followers: new UserFollowListData({
-        total: result.followers.length,
-        data: result.followers.map((f) => new UserFollowDTO(f.follower)),
-      }),
-      following: new UserFollowListData({
-        total: result.following.length,
-        data: result.following.map((f) => new UserFollowDTO(f.following)),
-      }),
-    };
+    return user;
   }
 
   async findByEmail(email: string) {
@@ -223,5 +223,38 @@ export class UserRepository {
     ]);
 
     return { users, total };
+  }
+
+  // Return list of following_ids that viewerId follows among provided userIds
+  async getFollowedUserIdsByViewer(
+    viewerId: number,
+    userIds: number[],
+  ): Promise<number[]> {
+    if (!userIds || userIds.length === 0) return [];
+
+    const rows = await this.userFollowRepository
+      .createQueryBuilder('uf')
+      .select('uf.following_id', 'following_id')
+      .where('uf.follower_id = :viewerId', { viewerId })
+      .andWhere('uf.following_id IN (:...ids)', { ids: userIds })
+      .getRawMany();
+
+    return rows.map((r) => Number(r.following_id));
+  }
+
+  // Count followers where following_id = userId
+  async countFollowers(userId: number): Promise<number> {
+    return this.userFollowRepository
+      .createQueryBuilder('uf')
+      .where('uf.following_id = :userId', { userId })
+      .getCount();
+  }
+
+  // Count following where follower_id = userId
+  async countFollowing(userId: number): Promise<number> {
+    return this.userFollowRepository
+      .createQueryBuilder('uf')
+      .where('uf.follower_id = :userId', { userId })
+      .getCount();
   }
 }

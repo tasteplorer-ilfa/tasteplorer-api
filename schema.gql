@@ -231,6 +231,18 @@ type ProfileDTO {
   """User Image"""
   image: String
 
+  """Whether the authenticated viewer follows this user"""
+  isFollowedByMe: Boolean
+
+  """Whether this user is the authenticated viewer"""
+  isMe: Boolean
+
+  """Total followers"""
+  totalFollowers: Int
+
+  """Total following"""
+  totalFollowing: Int
+
   """User Updated At"""
   updatedAt: String!
 
@@ -492,6 +504,12 @@ type UserDto {
 
   """User Image"""
   image: String
+
+  """Whether the authenticated viewer follows this user"""
+  isFollowedByMe: Boolean
+
+  """Whether this user is the authenticated viewer"""
+  isMe: Boolean
 
   """User Updated At"""
   updatedAt: String!
