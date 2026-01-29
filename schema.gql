@@ -243,6 +243,9 @@ type ProfileDTO {
   """Total following"""
   totalFollowing: Int
 
+  """Total posts by user"""
+  totalPosts: Int
+
   """User Updated At"""
   updatedAt: String!
 

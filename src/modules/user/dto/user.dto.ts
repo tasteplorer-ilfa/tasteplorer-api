@@ -95,6 +95,9 @@ export class ProfileDTO extends UserDto {
   @Field(() => Int, { description: 'Total following', nullable: true })
   totalFollowing?: number;
 
+  @Field(() => Int, { description: 'Total posts by user', nullable: true })
+  totalPosts?: number;
+
   // Keep legacy fields but mark as deprecated and nullable to avoid breaking changes.
   // Clients should migrate to totalFollowers / totalFollowing.
   @Field(() => UserFollowListData, {

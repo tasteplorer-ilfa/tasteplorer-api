@@ -167,10 +167,11 @@ export class UserService implements OnModuleInit {
         throw new Error('User not found');
       }
 
-      // Get follower/following counts via efficient COUNT queries
-      const [followersCount, followingCount] = await Promise.all([
+      // Get follower/following and posts counts via efficient COUNT queries
+      const [followersCount, followingCount, postsCount] = await Promise.all([
         this.userRepository.countFollowers(id),
         this.userRepository.countFollowing(id),
+        this.userRepository.countPosts(id),
       ]);
 
       const createdAt: string = utcToAsiaJakarta(user.createdAt);
@@ -190,6 +191,7 @@ export class UserService implements OnModuleInit {
         updatedAt,
         totalFollowers: followersCount,
         totalFollowing: followingCount,
+        totalPosts: postsCount,
         // include follow-state helpers for client
         isFollowedByMe,
         isMe,

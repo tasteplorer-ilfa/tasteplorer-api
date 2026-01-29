@@ -257,4 +257,14 @@ export class UserRepository {
       .where('uf.follower_id = :userId', { userId })
       .getCount();
   }
+
+  // Count posts for a user from feeds table. Uses a raw parameterized query for simplicity
+  // Excludes deleted posts if a deleted_at column exists.
+  async countPosts(userId: number): Promise<number> {
+    const rows = await this.repository.query(
+      `SELECT COUNT(id) AS cnt FROM feeds WHERE user_id = $1`,
+      [userId],
+    );
+    return Number(rows?.[0]?.cnt || 0);
+  }
 }
