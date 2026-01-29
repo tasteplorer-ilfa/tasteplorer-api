@@ -217,10 +217,10 @@ type ProfileDTO {
   email: String!
 
   """List of followers"""
-  followers: UserFollowListData
+  followers: UserFollowListData @deprecated(reason: "Deprecated: use totalFollowers instead. This field will be removed in a future release.")
 
   """List of following users"""
-  following: UserFollowListData!
+  following: UserFollowListData @deprecated(reason: "Deprecated: use totalFollowing instead. This field will be removed in a future release.")
 
   """User Fullname"""
   fullname: String
@@ -230,6 +230,21 @@ type ProfileDTO {
 
   """User Image"""
   image: String
+
+  """Whether the authenticated viewer follows this user"""
+  isFollowedByMe: Boolean
+
+  """Whether this user is the authenticated viewer"""
+  isMe: Boolean
+
+  """Total followers"""
+  totalFollowers: Int
+
+  """Total following"""
+  totalFollowing: Int
+
+  """Total posts by user"""
+  totalPosts: Int
 
   """User Updated At"""
   updatedAt: String!
@@ -492,6 +507,12 @@ type UserDto {
 
   """User Image"""
   image: String
+
+  """Whether the authenticated viewer follows this user"""
+  isFollowedByMe: Boolean
+
+  """Whether this user is the authenticated viewer"""
+  isMe: Boolean
 
   """User Updated At"""
   updatedAt: String!
