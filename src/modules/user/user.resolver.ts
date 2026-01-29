@@ -25,7 +25,7 @@ export class UserResolver {
   @Query(() => ProfileDTO, { name: 'currentUser' })
   @UseGuards(JwtAuthGuard)
   async currentUser(@CurrentUser() user: TokenPayload) {
-    const profile = await this.userService.findById(user.sub);
+    const profile = await this.userService.findById(user.sub, Number(user.sub));
     // Remove follower lists from currentUser response as they're not needed on profile page
     if (profile) {
       // delete properties if present to avoid breaking schema elsewhere
@@ -39,8 +39,45 @@ export class UserResolver {
 
   @Query(() => ProfileDTO, { name: 'userProfile' })
   @UseGuards(JwtAuthGuard)
-  async userProfile(@Args('id', { type: () => ID }) id: number) {
-    return this.userService.findById(id);
+  async userProfile(
+    @Args('id', { type: () => ID }) id: number,
+    @CurrentUser() viewer: TokenPayload,
+  ) {
+    const viewerId = viewer ? Number(viewer.sub) : undefined;
+    const profile = await this.userService.findById(id, viewerId);
+    if (!profile) return null;
+
+    // Work with a shallow copy to avoid mutating underlying object
+    const copy: any = { ...(profile as any) };
+
+    // Compute totals in a safe, optimized way:
+    // If service already provides counts (totalFollowers/totalFollowing), use them.
+    // Otherwise, derive counts from arrays if present.
+    const totalFollowers =
+      typeof copy.totalFollowers === 'number'
+        ? copy.totalFollowers
+        : Array.isArray(copy.followers)
+          ? copy.followers.length
+          : 0;
+
+    const totalFollowing =
+      typeof copy.totalFollowing === 'number'
+        ? copy.totalFollowing
+        : Array.isArray(copy.following)
+          ? copy.following.length
+          : 0;
+
+    // Remove potentially large arrays from response to avoid sending unnecessary data
+    // and to keep response payload small and consistent for the profile page.
+    // Use delete to avoid unused variable linter/compile warnings.
+    if (copy.followers) delete copy.followers;
+    if (copy.following) delete copy.following;
+
+    return {
+      ...copy,
+      totalFollowers,
+      totalFollowing,
+    };
   }
 
   @UseGuards(JwtAuthGuard)

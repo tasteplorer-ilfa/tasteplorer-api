@@ -50,24 +50,6 @@ export class UserDto {
 }
 
 @ObjectType()
-export class ProfileDTO extends UserDto {
-  @Field(() => Int, { description: 'Total followers', nullable: true })
-  totalFollowers?: number;
-
-  @Field(() => Int, { description: 'Total following', nullable: true })
-  totalFollowing?: number;
-
-  @Field(() => UserFollowListData, {
-    description: 'List of followers',
-    nullable: true,
-  })
-  followers: () => UserFollowListData;
-
-  @Field(() => UserFollowListData, { description: 'List of following users' })
-  following: () => UserFollowListData;
-}
-
-@ObjectType()
 export class UserFollowDTO {
   constructor(entity: Partial<UserFollowDTO>) {
     Object.assign(this, entity);
@@ -103,6 +85,33 @@ export class UserFollowListData {
 
   @Field(() => Int, { description: 'Total of users' })
   total: number;
+}
+
+@ObjectType()
+export class ProfileDTO extends UserDto {
+  @Field(() => Int, { description: 'Total followers', nullable: true })
+  totalFollowers?: number;
+
+  @Field(() => Int, { description: 'Total following', nullable: true })
+  totalFollowing?: number;
+
+  // Keep legacy fields but mark as deprecated and nullable to avoid breaking changes.
+  // Clients should migrate to totalFollowers / totalFollowing.
+  @Field(() => UserFollowListData, {
+    description: 'List of followers',
+    nullable: true,
+    deprecationReason:
+      'Deprecated: use totalFollowers instead. This field will be removed in a future release.',
+  })
+  followers?: UserFollowListData;
+
+  @Field(() => UserFollowListData, {
+    description: 'List of following users',
+    nullable: true,
+    deprecationReason:
+      'Deprecated: use totalFollowing instead. This field will be removed in a future release.',
+  })
+  following?: UserFollowListData;
 }
 
 @ObjectType()

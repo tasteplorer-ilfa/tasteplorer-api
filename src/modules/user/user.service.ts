@@ -160,7 +160,7 @@ export class UserService implements OnModuleInit {
     }
   }
 
-  async findById(id: number) {
+  async findById(id: number, viewerId?: number) {
     try {
       const user = await this.userRepository.findById(id);
       if (!user) {
@@ -176,12 +176,23 @@ export class UserService implements OnModuleInit {
       const createdAt: string = utcToAsiaJakarta(user.createdAt);
       const updatedAt: string = utcToAsiaJakarta(user.updatedAt);
 
+      // Determine viewer-related flags
+      const isMe = viewerId ? String(viewerId) === String(id) : false;
+      let isFollowedByMe = false;
+      if (viewerId && !isMe) {
+        // viewerId follows this user?
+        isFollowedByMe = await this.userRepository.isFollowing(viewerId, id);
+      }
+
       const payload: any = {
         ...user,
         createdAt,
         updatedAt,
         totalFollowers: followersCount,
         totalFollowing: followingCount,
+        // include follow-state helpers for client
+        isFollowedByMe,
+        isMe,
       };
 
       const result: ProfileDTO = new ProfileDTO(payload);

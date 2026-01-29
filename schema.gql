@@ -217,10 +217,10 @@ type ProfileDTO {
   email: String!
 
   """List of followers"""
-  followers: UserFollowListData
+  followers: UserFollowListData @deprecated(reason: "Deprecated: use totalFollowers instead. This field will be removed in a future release.")
 
   """List of following users"""
-  following: UserFollowListData!
+  following: UserFollowListData @deprecated(reason: "Deprecated: use totalFollowing instead. This field will be removed in a future release.")
 
   """User Fullname"""
   fullname: String
