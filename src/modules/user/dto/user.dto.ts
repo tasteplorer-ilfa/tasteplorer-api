@@ -34,18 +34,19 @@ export class UserDto {
 
   @Field(() => Date, { description: 'User Deleted At', nullable: true })
   deletedAt?: Date;
-}
 
-@ObjectType()
-export class ProfileDTO extends UserDto {
-  @Field(() => UserFollowListData, {
-    description: 'List of followers',
+  // Follow-state helpers for list view
+  @Field(() => Boolean, {
+    description: 'Whether the authenticated viewer follows this user',
     nullable: true,
   })
-  followers: () => UserFollowListData;
+  isFollowedByMe?: boolean;
 
-  @Field(() => UserFollowListData, { description: 'List of following users' })
-  following: () => UserFollowListData;
+  @Field(() => Boolean, {
+    description: 'Whether this user is the authenticated viewer',
+    nullable: true,
+  })
+  isMe?: boolean;
 }
 
 @ObjectType()
@@ -84,6 +85,36 @@ export class UserFollowListData {
 
   @Field(() => Int, { description: 'Total of users' })
   total: number;
+}
+
+@ObjectType()
+export class ProfileDTO extends UserDto {
+  @Field(() => Int, { description: 'Total followers', nullable: true })
+  totalFollowers?: number;
+
+  @Field(() => Int, { description: 'Total following', nullable: true })
+  totalFollowing?: number;
+
+  @Field(() => Int, { description: 'Total posts by user', nullable: true })
+  totalPosts?: number;
+
+  // Keep legacy fields but mark as deprecated and nullable to avoid breaking changes.
+  // Clients should migrate to totalFollowers / totalFollowing.
+  @Field(() => UserFollowListData, {
+    description: 'List of followers',
+    nullable: true,
+    deprecationReason:
+      'Deprecated: use totalFollowers instead. This field will be removed in a future release.',
+  })
+  followers?: UserFollowListData;
+
+  @Field(() => UserFollowListData, {
+    description: 'List of following users',
+    nullable: true,
+    deprecationReason:
+      'Deprecated: use totalFollowing instead. This field will be removed in a future release.',
+  })
+  following?: UserFollowListData;
 }
 
 @ObjectType()
