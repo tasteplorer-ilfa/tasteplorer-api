@@ -2,6 +2,28 @@ import { Observable } from 'rxjs';
 import { Metadata } from '@grpc/grpc-js';
 
 // ============================================================================
+// Engagement Service Interfaces (Like, Comment, etc.)
+// ============================================================================
+
+export interface LikeRequest {
+  userId: string;
+  recipeId: string;
+}
+
+export interface EngagementResponse {
+  success: boolean;
+  message: string;
+  is_liked?: boolean; // Added: reflects `is_liked` from engagement service
+}
+
+export interface EngagementService {
+  likeRecipe(
+    request: LikeRequest,
+    metadata?: Metadata,
+  ): Observable<EngagementResponse>;
+}
+
+// ============================================================================
 // User Suggestion Interfaces
 // ============================================================================
 

@@ -9,6 +9,7 @@ import { RecipeMedia } from './entities/recipe-media.entity';
 import { AuthModule } from '@module/auth/auth.module';
 import { RecipeRepository } from './recipe.repository';
 import { SearchServiceModule } from './grpc/search-service.module';
+import { EngagementServiceModule } from '@module/user/grpc/engagement-service.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SearchServiceModule } from './grpc/search-service.module';
     ]),
     AuthModule,
     SearchServiceModule,
+    EngagementServiceModule,
   ],
   providers: [RecipeResolver, RecipeService, RecipeRepository],
 })

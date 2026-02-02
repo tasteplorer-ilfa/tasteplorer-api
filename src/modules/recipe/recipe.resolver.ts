@@ -11,6 +11,10 @@ import {
   CreateRecipeSchema,
   UpdateRecipeSchema,
 } from './dto/recipe.validation.schema';
+import {
+  EngagementResponseDto,
+  ToggleLikeRecipeInput,
+} from './dto/engagement.dto';
 
 @Resolver(() => Recipe)
 export class RecipeResolver {
@@ -96,4 +100,17 @@ export class RecipeResolver {
   }
 
   // TODO: Add myRecipeDetail, it can handle when user open their own recipe and when redirect to recipe edit page in front, so if user try to by pass recipe id from url, it will call this query, so it will face the error because the recipe is not his own recipe.
+
+  @Mutation(() => EngagementResponseDto, {
+    name: 'toggleLikeRecipe',
+    description:
+      'Toggle like/unlike on a recipe. User ID is extracted from JWT token.',
+  })
+  @UseGuards(JwtAuthGuard)
+  async toggleLikeRecipe(
+    @Args('input') input: ToggleLikeRecipeInput,
+    @CurrentUser() user: TokenPayload,
+  ): Promise<EngagementResponseDto> {
+    return this.recipeService.toggleLikeRecipe(input.recipeId, user.sub);
+  }
 }
