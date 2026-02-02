@@ -91,6 +91,17 @@ type DeleteFeedResponseDto {
   success: Boolean!
 }
 
+type EngagementResponseDto {
+  """Current like status for the recipe (true = liked)"""
+  isLiked: Boolean
+
+  """Response message"""
+  message: String!
+
+  """Whether the operation was successful"""
+  success: Boolean!
+}
+
 """Folders in Cloudinary where images can be uploaded"""
 enum EnumFolder {
   ARTICLE
@@ -191,6 +202,9 @@ type Mutation {
   login(input: LoginInput!): AuthPayload!
   register(input: UserRegisterInput!): AuthPayload!
   removeRecipe(id: Int!): String!
+
+  """Toggle like/unlike on a recipe. User ID is extracted from JWT token."""
+  toggleLikeRecipe(input: ToggleLikeRecipeInput!): EngagementResponseDto!
   unfollowUser(followerId: Int!, followingId: Int!): Boolean!
   updateFeed(id: ID!, input: UpdateFeedInput!): FeedDto!
   updateRecipe(id: ID!, input: RecipeInput!): RecipeDto!
@@ -439,6 +453,11 @@ type SuggestedUserDto {
 
   """Username"""
   username: String!
+}
+
+input ToggleLikeRecipeInput {
+  """Recipe ID to like/unlike"""
+  recipeId: String!
 }
 
 input UpdateFeedInput {

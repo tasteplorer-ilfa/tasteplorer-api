@@ -10,6 +10,15 @@ import { RecipeMediaDto } from './dto/recipe-media.dto';
 import { UserDto } from '@module/user/dto/user.dto';
 import { RecipeRepository } from './recipe.repository';
 import { decodeCompositeCursor, decodeCursor } from '@common/utils/cursor';
+import { Inject, OnModuleInit } from '@nestjs/common';
+import { ClientGrpc } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
+import { Metadata } from '@grpc/grpc-js';
+import {
+  EngagementService,
+  LikeRequest,
+} from '@module/user/grpc/engagement.interface';
+import { EngagementResponseDto } from './dto/engagement.dto';
 
 function safeSerializeError(err: any): string {
   try {
@@ -39,11 +48,20 @@ function safeSerializeError(err: any): string {
 }
 
 @Injectable()
-export class RecipeService {
+export class RecipeService implements OnModuleInit {
+  private engagementService: EngagementService;
+
   constructor(
     private readonly recipeRepository: RecipeRepository,
     private readonly entityManager: EntityManager,
+    @Inject('ENGAGEMENT_SERVICE')
+    private readonly engagementClient: ClientGrpc,
   ) {}
+
+  onModuleInit() {
+    this.engagementService =
+      this.engagementClient.getService<EngagementService>('EngagementService');
+  }
 
   async create(
     createRecipeInput: RecipeInput,
@@ -516,6 +534,130 @@ export class RecipeService {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       throw new GraphQLError(message);
+    }
+  }
+
+  async toggleLikeRecipe(
+    recipeId: string,
+    userId: number,
+  ): Promise<EngagementResponseDto> {
+    try {
+      // Create metadata with user-id for authentication
+      const metadata = new Metadata();
+      metadata.set('user-id', userId.toString());
+
+      console.log('🔍 Sending LikeRecipe gRPC request:', {
+        userId,
+        recipeId,
+        metadataMap: metadata.getMap(),
+      });
+
+      // Create gRPC request
+      const request: LikeRequest = {
+        userId: userId.toString(),
+        recipeId: recipeId,
+      };
+
+      // Call gRPC service with metadata
+      const response = await firstValueFrom(
+        this.engagementService.likeRecipe(request, metadata),
+      );
+
+      console.log('✅ Received LikeRecipe gRPC response:', response);
+
+      // Ensure we operate on a plain JS object because some gRPC loaders
+      // return protobuf message instances with toObject()/toJSON() methods.
+      let rawResp: any = response as any;
+      if (rawResp && typeof rawResp.toObject === 'function') {
+        rawResp = rawResp.toObject({ defaults: false });
+      } else if (rawResp && typeof rawResp.toJSON === 'function') {
+        rawResp = rawResp.toJSON();
+      } else {
+        try {
+          rawResp = JSON.parse(JSON.stringify(rawResp));
+        } catch (e) {
+          // leave as-is if it cannot be serialized
+        }
+      }
+
+      // Add debug log for normalized response to help troubleshoot missing field
+      console.log('🔬 Normalized LikeRecipe response:', rawResp);
+
+      // Deep search helper: look for the first occurrence of any candidate keys in object tree
+      const findKeyDeep = (obj: any, candidates: string[]): any => {
+        if (obj == null) return undefined;
+        if (typeof obj !== 'object') return undefined;
+        for (const key of Object.keys(obj)) {
+          if (candidates.includes(key)) return obj[key];
+        }
+        for (const key of Object.keys(obj)) {
+          try {
+            const val = (obj as any)[key];
+            if (val && typeof val === 'object') {
+              const found = findKeyDeep(val, candidates);
+              if (found !== undefined) return found;
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+        return undefined;
+      };
+
+      // Try direct properties first, then deep search fallback
+      let rawIsLiked = rawResp?.is_liked ?? rawResp?.isLiked ?? null;
+      if (rawIsLiked === null || rawIsLiked === undefined) {
+        rawIsLiked = findKeyDeep(rawResp, ['is_liked', 'isLiked']);
+      }
+
+      // Coerce possible types to a proper boolean (handle string/number/bool)
+      let isLikedValue: boolean | null = null;
+      if (rawIsLiked !== null && rawIsLiked !== undefined) {
+        if (typeof rawIsLiked === 'boolean') {
+          isLikedValue = rawIsLiked;
+        } else if (typeof rawIsLiked === 'number') {
+          isLikedValue = rawIsLiked === 1;
+        } else if (typeof rawIsLiked === 'string') {
+          const lower = rawIsLiked.toLowerCase();
+          isLikedValue = lower === 'true' || lower === '1';
+        } else {
+          isLikedValue = Boolean(rawIsLiked);
+        }
+      }
+
+      // Construct explicit DTO instance to ensure GraphQL picks up fields correctly
+      const resultDto: EngagementResponseDto = new EngagementResponseDto();
+      (resultDto as any).success = rawResp?.success ?? response.success;
+      (resultDto as any).message = rawResp?.message ?? response.message;
+      (resultDto as any).isLiked = isLikedValue;
+
+      console.log('🔬 Returning DTO from toggleLikeRecipe:', resultDto);
+
+      return resultDto;
+    } catch (error) {
+      console.error('❌ gRPC Error Details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      });
+
+      // Handle gRPC errors gracefully
+      if (error.code === 'UNAVAILABLE' || error.code === 14) {
+        throw new GraphQLError(
+          'Engagement service is currently unavailable. Please try again later.',
+        );
+      }
+      if (error.code === 'UNAUTHENTICATED' || error.code === 16) {
+        throw new GraphQLError(
+          'Failed to authenticate with engagement service: ' + error.message,
+        );
+      }
+      if (error.code === 'NOT_FOUND' || error.code === 5) {
+        throw new GraphQLError('Recipe not found.');
+      }
+
+      const message = error instanceof Error ? error.message : String(error);
+      throw new GraphQLError(`Failed to toggle like: ${message}`);
     }
   }
 }

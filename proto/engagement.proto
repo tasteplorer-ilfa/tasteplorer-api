@@ -74,6 +74,7 @@ message EventRequest {
 message EngagementResponse {
     bool success = 1;
     string message = 2;
+    bool is_liked = 3;
 }
 
 message PointResponse {
