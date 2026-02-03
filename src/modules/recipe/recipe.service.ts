@@ -210,13 +210,16 @@ export class RecipeService implements OnModuleInit {
     }
   }
 
-  async findOne(id: number): Promise<RecipeDto> {
+  async findOne(id: number, userId?: number): Promise<RecipeDto> {
     try {
       const recipe = await this.recipeRepository.findById(id);
 
       if (!recipe) {
         throw new GraphQLError('Recipe not found.');
       }
+
+      // Check if user has liked this recipe
+      const isLiked = await this.recipeRepository.checkIsLiked(id, userId);
 
       const ingredients = recipe.ingredients.map((ingredient) => {
         const recipeIngredientDto: RecipeIngredientDto =
@@ -258,6 +261,7 @@ export class RecipeService implements OnModuleInit {
         instructions,
         image,
         author,
+        isLiked,
         createdAt: utcToAsiaJakarta(recipe.createdAt),
         updatedAt: utcToAsiaJakarta(recipe.updatedAt),
       };
@@ -448,6 +452,9 @@ export class RecipeService implements OnModuleInit {
         throw new GraphQLError('Recipe not found.');
       }
 
+      // Check if user has liked this recipe
+      const isLiked = await this.recipeRepository.checkIsLiked(id, userId);
+
       const ingredients = recipe.ingredients.map((ingredient) => {
         const recipeIngredientDto: RecipeIngredientDto =
           new RecipeIngredientDto({
@@ -488,6 +495,7 @@ export class RecipeService implements OnModuleInit {
         instructions,
         image,
         author,
+        isLiked,
         createdAt: utcToAsiaJakarta(recipe.createdAt),
         updatedAt: utcToAsiaJakarta(recipe.updatedAt),
       };
