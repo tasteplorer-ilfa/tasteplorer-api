@@ -322,6 +322,9 @@ type RecipeDto {
   """Is A Favorite Recipe"""
   isFavorite: Boolean
 
+  """Whether the current user has liked this recipe"""
+  isLiked: Boolean
+
   """Denormalized likes count"""
   likesCount: Int!
 

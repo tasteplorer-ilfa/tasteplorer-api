@@ -6,6 +6,7 @@ import { CurrentUser } from '@module/user/decorator/current-user.decorator';
 import { TokenPayload } from '@common/dto/tokenPayload.dto';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '@module/auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '@module/auth/guards/optional-jwt-auth.guard';
 import { InputValidationPipe } from '@common/middleware/auth/input-validation.pipe';
 import {
   CreateRecipeSchema,
@@ -61,10 +62,12 @@ export class RecipeResolver {
   }
 
   @Query(() => RecipeDto, { name: 'recipeDetail' })
+  @UseGuards(OptionalJwtAuthGuard)
   async recipeDetail(
     @Args('id', { type: () => Int }) id: number,
+    @CurrentUser() user?: TokenPayload,
   ): Promise<RecipeDto> {
-    return this.recipeService.findOne(id);
+    return this.recipeService.findOne(id, user?.sub);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -6,6 +6,7 @@ import { Recipe } from './entities/recipe.entity';
 import { RecipeIngredient } from './entities/recipe-ingredient.entity';
 import { RecipeInstruction } from './entities/recipe-instruction.entity';
 import { RecipeMedia } from './entities/recipe-media.entity';
+import { RecipeLike } from './entities/recipe-like.entity';
 import { AuthModule } from '@module/auth/auth.module';
 import { RecipeRepository } from './recipe.repository';
 import { SearchServiceModule } from './grpc/search-service.module';
@@ -18,6 +19,7 @@ import { EngagementServiceModule } from '@module/user/grpc/engagement-service.mo
       RecipeIngredient,
       RecipeInstruction,
       RecipeMedia,
+      RecipeLike,
     ]),
     AuthModule,
     SearchServiceModule,

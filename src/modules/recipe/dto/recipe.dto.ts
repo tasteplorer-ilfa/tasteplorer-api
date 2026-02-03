@@ -38,6 +38,12 @@ export class RecipeDto {
   })
   hotScore?: number;
 
+  @Field(() => Boolean, {
+    description: 'Whether the current user has liked this recipe',
+    nullable: true,
+  })
+  isLiked?: boolean;
+
   @Field(() => UserDto, { description: 'Recipe Author Detail' })
   author: UserDto;
 

@@ -1,6 +1,7 @@
 import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Recipe } from './entities/recipe.entity';
+import { RecipeLike } from './entities/recipe-like.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { RecipeDto, RecipeInput } from './dto/recipe.dto';
 import { RecipeIngredient } from './entities/recipe-ingredient.entity';
@@ -19,6 +20,8 @@ export class RecipeRepository implements OnModuleInit {
   constructor(
     @InjectRepository(Recipe)
     private readonly repository: Repository<Recipe>,
+    @InjectRepository(RecipeLike)
+    private readonly recipeLikeRepository: Repository<RecipeLike>,
     private readonly entityManager: EntityManager,
     @Inject('SEARCH_SERVICE') private readonly searchClient: ClientGrpc,
   ) {}
@@ -538,5 +541,20 @@ export class RecipeRepository implements OnModuleInit {
         false,
       ];
     }
+  }
+
+  async checkIsLiked(recipeId: number, userId?: number): Promise<boolean> {
+    if (!userId) {
+      return false;
+    }
+
+    const like = await this.recipeLikeRepository.findOne({
+      where: {
+        recipeId,
+        userId,
+      },
+    });
+
+    return !!like;
   }
 }
