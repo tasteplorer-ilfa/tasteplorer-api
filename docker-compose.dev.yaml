@@ -14,10 +14,17 @@ services:
       - rabbitmq-server_rabbitmq-network-dev
     env_file:
       - .env
+    # Add DNS configuration
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    # Ensure container has internet access
 
 volumes:
   .:
+
 networks:
   app-network:
+    driver: bridge
   rabbitmq-server_rabbitmq-network-dev:
     external: true
